@@ -14,9 +14,9 @@ import static io.github.zimoyin.zhenfa.block.base.BlockRegterTables.getDataList;
 /**
  * Tag 的作用类似于矿物辞典，但又不完全相同。
  */
-public class EBlockTagsProvider extends BlockTagsProvider {
+public class BlockTagProviders extends BlockTagsProvider {
 
-    public EBlockTagsProvider(DataGenerator generator, ExistingFileHelper helper) {
+    public BlockTagProviders(DataGenerator generator, ExistingFileHelper helper) {
         super(generator, MOD_ID, helper);
     }
 

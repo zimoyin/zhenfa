@@ -1,5 +1,6 @@
 package io.github.zimoyin.zhenfa.block.base;
 
+import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -16,10 +17,12 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * 实体方块基础类，该类描述一个确实存在的方块
@@ -43,6 +46,10 @@ public abstract class BaseEntityBlock extends net.minecraft.world.level.block.Ba
     private BaseBlock.ToolType toolType = null;
 
     private Class<? extends BlockEntity> entityClazz = null;
+    private Method serverTickMethod = null;
+    private Method clientTickMethod = null;
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
 
     /**
@@ -144,7 +151,7 @@ public abstract class BaseEntityBlock extends net.minecraft.world.level.block.Ba
         return RenderShape.MODEL;
     }
 
-    private void updateEntityClazz(){
+    private void updateEntityClazz() {
         if (entityClazz == null) {
             BlockRegterTables.RegisterBlock annotation = this.getClass().getAnnotation(BlockRegterTables.RegisterBlock.class);
             if (annotation == null) throw new RuntimeException("BlockEntity must be annotated with @RegisterBlock");
@@ -185,13 +192,35 @@ public abstract class BaseEntityBlock extends net.minecraft.world.level.block.Ba
      * 每 tick 都会调用，仅在客户端上执行
      */
     public void clientTick(Level level, BlockPos pos, BlockState state, BlockEntity o) {
-
+        // 执行类实体中的 clientTick 方法
+        try {
+            if (clientTickMethod == null) {
+                clientTickMethod = entityClazz.getMethod("clientTick", Level.class, BlockPos.class, BlockState.class, BlockEntity.class);
+                clientTickMethod.setAccessible(true);
+            }
+            BlockEntity entity = BaseBlockEntity.getEntityType(entityClazz).getBlockEntity(level, pos);
+            if (entity != null) clientTickMethod.invoke(entity, level, pos, state, o);
+            else LOGGER.warn("BaseBlockEntity serverTick method entity is null in {}", entityClazz.getName());
+        } catch (Exception e) {
+            LOGGER.error("BaseBlockEntity clientTick method exception in {}", entityClazz.getName(), e);
+        }
     }
 
     /**
      * 每 tick 都会调用，仅在服务端上执行
      */
     public void serverTick(Level level, BlockPos pos, BlockState state, BlockEntity e) {
-
+        // 执行类实体中的 serverTick 方法
+        try {
+            if (serverTickMethod == null) {
+                serverTickMethod = entityClazz.getMethod("serverTick", Level.class, BlockPos.class, BlockState.class, BlockEntity.class);
+                serverTickMethod.setAccessible(true);
+            }
+            BlockEntity entity = BaseBlockEntity.getEntityType(entityClazz).getBlockEntity(level, pos);
+            if (entity != null) serverTickMethod.invoke(entity, level, pos, state, e);
+            else LOGGER.warn("BaseBlockEntity serverTick method entity is null in {}", entityClazz.getName());
+        } catch (Exception ex) {
+            LOGGER.error("BaseBlockEntity serverTick method exception in {}", entityClazz.getName(), ex);
+        }
     }
 }

@@ -1,6 +1,7 @@
 package io.github.zimoyin.zhenfa.datagen;
 
 import io.github.zimoyin.zhenfa.datagen.provider.*;
+import io.github.zimoyin.zhenfa.utils.Lang;
 import net.minecraft.data.DataGenerator;
 import net.minecraftforge.common.data.LanguageProvider;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -16,17 +17,17 @@ public class DataGenerators {
     public static void gatherData(GatherDataEvent event) {
         DataGenerator generator = event.getGenerator();
         if (event.includeServer()) {
-            generator.addProvider(new TutRecipes(generator));
+            generator.addProvider(new Recipes(generator));
             generator.addProvider(new LootTableProvider(generator));
-            EBlockTagsProvider blockTags = new EBlockTagsProvider(generator, event.getExistingFileHelper());
+            BlockTagProviders blockTags = new BlockTagProviders(generator, event.getExistingFileHelper());
             generator.addProvider(blockTags);
-            generator.addProvider(new ItemTags(generator, blockTags, event.getExistingFileHelper()));
+            generator.addProvider(new ItemTagProviders(generator, blockTags, event.getExistingFileHelper()));
         }
         if (event.includeClient()) {
             generator.addProvider(new BlockStates(generator, event.getExistingFileHelper()));
             generator.addProvider(new ItemModels(generator, event.getExistingFileHelper()));
-            for (LanguageProvider provider : new LanguageProviders(generator).getLanguageProviders()) {
-                generator.addProvider(provider);
+            for (Lang.LangType type : Lang.LangType.values()) {
+                generator.addProvider(new LanguageProviders(generator,type));
             }
         }
     }

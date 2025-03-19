@@ -2,6 +2,7 @@ package io.github.zimoyin.zhenfa;
 
 import com.mojang.logging.LogUtils;
 import io.github.zimoyin.zhenfa.block.base.BlockRegterTables;
+import io.github.zimoyin.zhenfa.item.base.ItemRegterTables;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
@@ -37,6 +38,7 @@ public class Zhenfa {
         MinecraftForge.EVENT_BUS.register(this);
 
         BlockRegterTables.autoRegisterAll(FMLJavaModLoadingContext.get());
+        ItemRegterTables.autoRegisterAll(FMLJavaModLoadingContext.get());
     }
 
 

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
+import java.util.Optional;
 
 /**
  * @author : zimo
@@ -51,11 +52,6 @@ public class Test2Block extends BaseEntityBlock {
         }
 
         return super.use(pState, pLevel, pPos, pPlayer, pHand, pHit);
-    }
-
-    @Override
-    public void clientTick(Level level, BlockPos pos, BlockState state, BlockEntity o) {
-        Test2BlockEntity.clientTick(level, pos, state, o);
     }
 
     /**
@@ -104,6 +100,10 @@ public class Test2Block extends BaseEntityBlock {
 
         /**
          * 同步的方法，看不懂就照抄，调用它会调用下面的 getUpdateTag
+         * 同步操作 ：
+         *      调用 sync() 方法发送数据包到客户端，更新客户端的数据（如 count）。
+         *      sync() 内部通过 ClientboundBlockEntityDataPacket 实现网络同步。
+         * 状态重置 ：同步完成后将 needSync 设为 false，避免重复同步。
          */
         protected void sync() {
             if (level != null && !level.isClientSide) {
@@ -151,24 +151,24 @@ public class Test2Block extends BaseEntityBlock {
             needSync = true;
         }
 
-        /**
-         * 每 tick 都会调用，仅在客户端上执行
-         */
-        public static void clientTick(Level level, BlockPos pos, BlockState state, BlockEntity o) {
-
-        }
 
         /**
          * 每 tick 都会调用，仅在服务端上执行
          */
-        public static void serverTick(Level level, BlockPos pos, BlockState state, Test2BlockEntity e) {
-            e.syncTick();
+        @Override
+        public void serverTick(Level level, BlockPos pos, BlockState state, BlockEntity e) {
+            asEntity(this.getClass(),e).ifPresent(Test2BlockEntity::syncTick);
         }
+
 
         // 同步的解决方案
 
         boolean needSync;
 
+        /**
+         * 数据同步需求 ：服务端数据（如 count 字段）需要同步到客户端，但直接操作可能引发线程安全或状态不一致的问题。
+         * needSync 标志 ：用于标记是否需要触发同步。
+         */
         void syncTick() {
             if (needSync) {
                 sync();

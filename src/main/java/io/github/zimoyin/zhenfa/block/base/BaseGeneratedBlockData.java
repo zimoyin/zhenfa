@@ -1,12 +1,14 @@
 package io.github.zimoyin.zhenfa.block.base;
 
 import io.github.zimoyin.zhenfa.datagen.provider.LootTableProvider;
+import io.github.zimoyin.zhenfa.datagen.provider.Recipes;
+import io.github.zimoyin.zhenfa.utils.Lang;
 import io.github.zimoyin.zhenfa.utils.ResourcesUtils;
+import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
 
@@ -32,6 +34,8 @@ public class BaseGeneratedBlockData {
 
     /**
      * 方块的语言描述
+     * Lang(LangType.ZH_CN, "测试方块") // 为方块添加名称
+     * Lang("ID","描述",LangType.ZH_CN) // 为描述添加
      */
     public List<Lang> lang() {
         return List.of();
@@ -78,88 +82,24 @@ public class BaseGeneratedBlockData {
 
     /**
      * 注册方块的掉落
-     *
+     * <p>
      * 注册能保修NBT的凋落物
      * createStandardTable(
-     *             "inventory_block",
-     *             ModBlocks.INVENTORY_BLOCK.get(),
-     *             ModBlockEntities.INVENTORY_BLOCK_ENTITY.get()
-     *         )
+     * "inventory_block",
+     * ModBlocks.INVENTORY_BLOCK.get(),
+     * ModBlockEntities.INVENTORY_BLOCK_ENTITY.get()
+     * )
      */
-    public LootTable.Builder registerLootTable(LootTableProvider provider) {
-        return provider.createSimpleTable(data.getBlockId(), data.getBlock());
+    public void registerLootTable(LootTableProvider provider) {
+        provider.createSimpleTable(data.getBlockId(), data.getBlock());
     }
 
     /**
-     * 方块的语言描述
+     * 合成表
+     * @param recipes 只提供了简单的合成表，如果需要更多的合成表请使用静态方法
      *
      */
-    public static class Lang {
-        final String lange;
-        final String name;
-        final String groupPrefix;
-        final String groupId;
-        final String groupName;
+    public void registerBlockItemRecipe(Recipes recipes) {
 
-        /**
-         *
-         * @param lange 语言 如 en_us, zh_cn
-         * @param name  方块名称
-         */
-        public Lang(String lange, String name) {
-            this.lange = lange;
-            this.name = name;
-            this.groupPrefix = "itemGroup.";
-            this.groupId = null;
-            this.groupName = null;
-        }
-
-        /**
-         * 带分组的方块语言描述
-         * @param groupId 物品组的ID
-         * @param groupName 物品组的名称
-         */
-        public Lang(String lange, String name, String groupId, String groupName) {
-            this.lange = lange;
-            this.name = name;
-            this.groupPrefix = "itemGroup.";
-            this.groupId = groupId;
-            this.groupName = groupName;
-        }
-
-        public Lang(String lange, String name, String groupPrefix, String groupId, String groupName) {
-            this.lange = lange;
-            this.name = name;
-            this.groupPrefix = groupPrefix;
-            this.groupId = groupId;
-            this.groupName = groupName;
-        }
-
-        public String getLange() {
-            return lange;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getGroupPrefix() {
-            return groupPrefix;
-        }
-
-        public String getGroupId() {
-            return groupId;
-        }
-
-        public String getGroupIdWithPrefix() {
-            return groupPrefix + groupId;
-        }
-
-        public String getGroupName() {
-            return groupName;
-        }
-
-        public static final String en_us = "en_us";
-        public static final String zh_cn = "zh_cn";
     }
 }

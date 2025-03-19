@@ -9,6 +9,10 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Optional;
+
 /**
  * 方块实体基础类, 该类描述一个确实存在的实体。理解为一个方块的数据集并非是一个具体的方块
  *
@@ -24,10 +28,32 @@ public abstract class BaseBlockEntity extends BlockEntity {
         super(null, worldPosition, blockState);
     }
 
+
+    /**
+     * 每 tick 都会调用，仅在客户端上执行
+     */
+    public void clientTick(Level level, BlockPos pos, BlockState state, BlockEntity e) {
+
+    }
+
+    /**
+     * 每 tick 都会调用，仅在服务端上执行
+     */
+    public void serverTick(Level level, BlockPos pos, BlockState state, BlockEntity e) {
+
+    }
+
     /**
      * 获取实体类型。用于作为 BaseBlockEntity 的构造函数参数。
      */
     public static BlockEntityType<?> getEntityType(Class<? extends BlockEntity> cls) {
         return BlockRegterTables.getEntityRegistryObject(cls).get();
+    }
+
+    public static <T extends BlockEntity> Optional<T> asEntity(Class<T> cls, BlockEntity e) {
+        if (cls.isInstance(e)) {
+            return Optional.of(cls.cast(e));
+        }
+        return Optional.empty();
     }
 }

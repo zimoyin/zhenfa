@@ -1,52 +1,55 @@
 package io.github.zimoyin.zhenfa.datagen.provider;
 
 import io.github.zimoyin.zhenfa.block.base.BaseBlock;
-import io.github.zimoyin.zhenfa.block.base.BaseGeneratedBlockData;
+import io.github.zimoyin.zhenfa.block.base.BlockRegterTables;
+import io.github.zimoyin.zhenfa.item.base.BaseItem;
+import io.github.zimoyin.zhenfa.item.base.ItemRegterTables;
+import io.github.zimoyin.zhenfa.utils.Lang;
 import net.minecraft.data.DataGenerator;
 import net.minecraftforge.common.data.LanguageProvider;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static io.github.zimoyin.zhenfa.block.base.BlockRegterTables.getDataList;
 import static io.github.zimoyin.zhenfa.datagen.Config.DataGenModId;
 
 /**
  * @author : zimo
- * &#064;date : 2025/03/18
+ * &#064;date : 2025/03/19
  */
-public class LanguageProviders {
+public class LanguageProviders extends LanguageProvider {
+    private final Lang.LangType currentFileLang;
 
-    private final DataGenerator generator;
-
-    public LanguageProviders(DataGenerator generator) {
-        this.generator = generator;
+    public LanguageProviders(DataGenerator gen, Lang.LangType type) {
+        super(gen, DataGenModId, type.getName());
+        this.currentFileLang = type;
     }
 
-    public List<LanguageProvider> getLanguageProviders() {
-        ArrayList<LanguageProvider> providers = new ArrayList<>();
-        for (BaseBlock.Data data : getDataList()) {
-            int size = providers.size();
-            if (data.isGenerated()) {
-                for (BaseGeneratedBlockData.Lang lang : data.getGeneratedData().lang()) providers.add(getProvider(data, lang));
+    @Override
+    protected void addTranslations() {
+        for (BaseBlock.Data data : BlockRegterTables.getDataList()) {
+            if (data.getBlock() instanceof BaseBlock data2) {
+                if (Lang.LangType.EN_US.equals(currentFileLang)) add(data.getBlock(), data2.getBlockName());
             }
-            if (providers.size() == size){
-                if (data.getBlock() instanceof BaseBlock){
-                    providers.add(getProvider(data, new BaseGeneratedBlockData.Lang(BaseGeneratedBlockData.Lang.en_us,((BaseBlock) data.getBlock()).getBlockName())));
+            if (data.isGenerated()) {
+                for (Lang lang : data.getGeneratedData().lang()) {
+                    if (lang.getLange().equals(currentFileLang)) {
+                        if (lang.getKey() == null) add(data.getBlock(), lang.getName());
+                        else add(lang.getKey(), lang.getName());
+                    }
                 }
             }
         }
-        return providers;
-    }
-
-    private @NotNull LanguageProvider getProvider(BaseBlock.Data data, BaseGeneratedBlockData.Lang lang) {
-        return new LanguageProvider(generator, DataGenModId, lang.getLange()) {
-            @Override
-            protected void addTranslations() {
-                if (lang.getGroupId() != null) add(lang.getGroupIdWithPrefix(), lang.getGroupName());
-                add(data.getBlock(), lang.getName());
+        // 添加物品语言文件
+        for (BaseItem.Data data : ItemRegterTables.getDataList()) {
+            if (data.getItem() instanceof BaseItem data2) {
+                if (Lang.LangType.EN_US.equals(currentFileLang)) add(data.getItem(), data2.getItemName());
             }
-        };
+            if (data.isGenerated()) {
+                for (Lang lang : data.getGeneratedData().lang()) {
+                    if (lang.getLange().equals(currentFileLang)) {
+                        if (lang.getKey() == null) add(data.getItem(), lang.getName());
+                        else add(lang.getKey(), lang.getName());
+                    }
+                }
+            }
+        }
     }
 }

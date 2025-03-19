@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static io.github.zimoyin.zhenfa.Zhenfa.MOD_ID;
-import static io.github.zimoyin.zhenfa.item.Items.ITEMS;
+import static io.github.zimoyin.zhenfa.item.base.ItemRegterTables.ITEMS;
 import static io.github.zimoyin.zhenfa.utils.SupplierFactoryUtils.createFactory;
 
 /**
@@ -91,7 +91,6 @@ public class BlockRegterTables {
             }
         }
         BLOCKS.register(context.getModEventBus());
-        ITEMS.register(context.getModEventBus());
         BLOCK_ENTITIES.register(context.getModEventBus());
     }
 
@@ -126,7 +125,7 @@ public class BlockRegterTables {
     public static void registerBlockAndBlockItem(Class<? extends Block> cls) {
         RegisterBlock annotation = cls.getAnnotation(RegisterBlock.class);
         if (annotation == null) {
-            LOGGER.warn("Failed to register block; Class {} has no annotation @IBlock", cls.getName());
+            LOGGER.warn("Failed to register block; Class {} has no annotation @RegisterBlock", cls.getName());
             return;
         }
 
@@ -138,7 +137,7 @@ public class BlockRegterTables {
         if (itemId == null || itemId.isEmpty()) itemId = blockId;
         if (blockId == null || blockId.isEmpty()) {
             blockId = cls.getSimpleName().toLowerCase();
-            LOGGER.warn("Class {} has no annotation @IBlock: blockId", cls.getName());
+            LOGGER.warn("Class {} has no annotation @RegisterBlock: blockId", cls.getName());
         }
 
         RegistryObject<BlockEntityType<?>> registryBlockEntityType = null;
@@ -250,7 +249,7 @@ public class BlockRegterTables {
          * 是否注入Data 他是 Data(RegistryObject<Block> blockObj, RegistryObject<Item> itemObj)
          * 如果为true 则在注解下 Data 类型的静态变量(该字段必须是公开的)
          */
-        boolean data() default true;
+        boolean data() default false;
 
         /**
          * 是否生成方块数据

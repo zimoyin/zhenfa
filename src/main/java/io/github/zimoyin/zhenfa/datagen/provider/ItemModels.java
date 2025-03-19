@@ -2,6 +2,8 @@ package io.github.zimoyin.zhenfa.datagen.provider;
 
 import io.github.zimoyin.zhenfa.block.base.BaseBlock;
 import io.github.zimoyin.zhenfa.block.base.BlockRegterTables;
+import io.github.zimoyin.zhenfa.item.base.BaseItem;
+import io.github.zimoyin.zhenfa.item.base.ItemRegterTables;
 import net.minecraft.data.DataGenerator;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.common.data.ExistingFileHelper;
@@ -21,6 +23,10 @@ public class ItemModels extends ItemModelProvider {
     @Override
     protected void registerModels() {
         for (BaseBlock.Data data : BlockRegterTables.getDataList()) {
+            if (data.isGenerated()) data.getGeneratedData().registerItemModel(this);
+        }
+
+        for (BaseItem.Data data : ItemRegterTables.getDataList()) {
             if (data.isGenerated()) data.getGeneratedData().registerItemModel(this);
         }
     }
