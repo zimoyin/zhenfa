@@ -1,15 +1,9 @@
 package io.github.zimoyin.zhenfa.item.base;
 
 import com.mojang.logging.LogUtils;
-import io.github.zimoyin.zhenfa.block.base.BaseBlock;
-import io.github.zimoyin.zhenfa.block.base.BaseGeneratedBlockData;
-import io.github.zimoyin.zhenfa.block.base.BlockRegterTables;
 import io.github.zimoyin.zhenfa.utils.ScanResultUtils;
-import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
@@ -21,6 +15,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -38,11 +33,20 @@ public class ItemRegterTables {
 
 
     private static final Logger LOGGER = LogUtils.getLogger();
+    private static final ArrayList<BaseItem.Data> DATA_LIST = new ArrayList<>();
     private static final HashMap<Class<?>, BaseItem.Data> DATA_MAP = new HashMap<>();
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MOD_ID);
 
+
+    public static BaseItem.Data getData(Class<?> cls){
+        return DATA_MAP.get(cls);
+    }
+
     public static List<BaseItem.Data> getDataList() {
-        return DATA_MAP.values().stream().toList();
+        ArrayList<BaseItem.Data> list = new ArrayList<>();
+        list.addAll(DATA_LIST);
+        list.addAll(DATA_MAP.values());
+        return list;
     }
 
     public static void autoRegisterAll(FMLJavaModLoadingContext context) {
@@ -52,8 +56,8 @@ public class ItemRegterTables {
             Class<?> clazz;
             try {
                 clazz = Class.forName(cls);
-                if (Item.class.isAssignableFrom(clazz)) {
-                    registerItem((Class<? extends Item>) clazz);
+                if (Item.class.isAssignableFrom(clazz) && clazz.getAnnotation(RegisterItem.class) != null) {
+                    register((Class<? extends Item>) clazz);
                     LOGGER.info("register item {}", clazz);
                 }
             } catch (Exception e) {
@@ -63,7 +67,22 @@ public class ItemRegterTables {
         ITEMS.register(context.getModEventBus());
     }
 
-    public static void registerItem(Class<? extends Item> cls) {
+    public static BaseItem.Data register(String id, Item.Properties properties, Class<? extends BaseGeneratedItemData> cls) {
+        if (id == null) throw new IllegalArgumentException("id cannot be null");
+        if (properties == null) properties = new Item.Properties().tab(CreativeModeTab.TAB_MISC);
+        if (cls == null) cls = BaseGeneratedItemData.class;
+
+        Item.Properties finalProperties = properties;
+        RegistryObject<Item> itemRegistryObject = ITEMS.register(id, ()-> new BaseItem(finalProperties));
+        BaseItem.Data data = new BaseItem.Data(itemRegistryObject, null, null).setData(cls).setItemId(id);
+        DATA_LIST.add(data);
+        return data;
+    }
+
+    /**
+     * 自动注册物品，只注册带有 RegisterItem 注解的物品
+     */
+    public static void register(Class<? extends Item> cls) {
         RegisterItem annotation = cls.getAnnotation(RegisterItem.class);
         if (annotation == null) {
             LOGGER.warn("Failed to register item; Class {} has no annotation @RegisterItem", cls.getName());
@@ -79,7 +98,7 @@ public class ItemRegterTables {
         }
 
         RegistryObject<Item> itemRegistryObject = ITEMS.register(itemId, createFactory(cls));
-        BaseItem.Data data = new BaseItem.Data(itemRegistryObject, cls,annotation);
+        BaseItem.Data data = new BaseItem.Data(itemRegistryObject, cls, annotation);
         DATA_MAP.put(cls, data);
 
         if (isInjectData) {

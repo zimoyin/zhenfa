@@ -1,24 +1,18 @@
 package io.github.zimoyin.zhenfa.item.base;
 
-import io.github.zimoyin.zhenfa.block.base.BaseBlock;
-import io.github.zimoyin.zhenfa.block.base.BaseGeneratedBlockData;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.RegistryObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * @author : zimo
  * @date : 2025/03/16
  */
-public abstract class BaseItem extends Item {
+public class BaseItem extends Item {
     private String itemName;
 
 
@@ -52,8 +46,11 @@ public abstract class BaseItem extends Item {
         private final RegistryObject<Item> itemRegistryObject;
         private final ItemRegterTables.RegisterItem annotation;
         private final Class<? extends Item> cls;
+        private BaseGeneratedItemData data;
+        private String itemId;
 
         private final Logger LOGGER = LogManager.getLogger();
+
         public Data(RegistryObject<Item> itemRegistryObject, Class<? extends Item> cls, ItemRegterTables.RegisterItem annotation) {
             this.itemRegistryObject = itemRegistryObject;
             this.cls = cls;
@@ -69,25 +66,52 @@ public abstract class BaseItem extends Item {
         }
 
         public String getItemId() {
-            if (annotation.value() != null && !annotation.value().isEmpty()) return annotation.value();
-            return cls.getSimpleName().toLowerCase();
+            if (annotation != null && annotation.value() != null && !annotation.value().isEmpty()) return annotation.value();
+            if (cls != null) return cls.getSimpleName().toLowerCase();
+            return Objects.requireNonNullElseGet(itemId, () -> itemRegistryObject.get().getRegistryName().getPath());
         }
 
         public boolean isGenerated() {
-            return annotation.isGenerated();
+            if (annotation != null) return annotation.isGenerated();
+            return data != null;
         }
 
-        private BaseGeneratedItemData data;
+
         public BaseGeneratedItemData getGeneratedData() {
             try {
                 if (data == null) {
-                    data = annotation.generatedData().getConstructor(BaseItem.Data.class).newInstance(this);
+                    if (annotation != null) {
+                        data = annotation.generatedData().getConstructor(BaseItem.Data.class).newInstance(this);
+                    }
                 }
             } catch (Exception e) {
                 data = new BaseGeneratedItemData(this);
                 LOGGER.error("\n!!!!! ERROR !!!!!!\nFailed to create generated data for block {}\n@See: Please set it as public static\n", annotation.generatedData(), e);
             }
             return data;
+        }
+
+
+        public Data setData(Class<? extends BaseGeneratedItemData> dataClass) {
+            if (dataClass == null) return this;
+            try {
+                if (data == null) {
+                    if (annotation != null) {
+                        data = annotation.generatedData().getConstructor(BaseItem.Data.class).newInstance(this);
+                    } else {
+                        data = dataClass.getConstructor(BaseItem.Data.class).newInstance(this);
+                    }
+                }
+            } catch (Exception e) {
+                data = new BaseGeneratedItemData(this);
+                LOGGER.error("\n!!!!! ERROR !!!!!!\nFailed to create generated data for block {}\n@See: Please set it as public static\n", annotation.generatedData(), e);
+            }
+            return this;
+        }
+
+        public Data setItemId(String itemId) {
+            this.itemId = itemId;
+            return this;
         }
 
         public Item getItem() {

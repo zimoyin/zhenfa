@@ -8,29 +8,18 @@ import io.github.zimoyin.zhenfa.savedata.TutorialSavedData;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author : zimo
  * &#064;date : 2025/03/19
  */
-@ItemRegterTables.RegisterItem(value = "test3", data = true, generatedData = TestItem.GeneratedItemData.class)
-public class TestItem extends BaseItem {
-    // 会在合适的适合进行反射注入
-    public static BaseItem.Data RegisterItemData = null;
+@ItemRegterTables.RegisterItem
+public class Test2Item extends BaseItem {
 
-    public TestItem() {
-        setItemName("Test3");
-    }
-
-    @Override
-    public @NotNull InteractionResultHolder<ItemStack> use(Level level, @NotNull Player player, @NotNull InteractionHand hand) {
-        if (!level.isClientSide) {
-            TutorialSavedData.get(level).click(player);
-        }
-        return super.use(level, player, hand);
-    }
-
+    public static final Data ITEM_1 = ItemRegterTables.register("test2", new Properties(), null);
 }

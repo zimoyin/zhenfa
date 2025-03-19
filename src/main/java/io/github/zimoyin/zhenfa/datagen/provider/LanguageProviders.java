@@ -1,5 +1,6 @@
 package io.github.zimoyin.zhenfa.datagen.provider;
 
+import com.mojang.logging.LogUtils;
 import io.github.zimoyin.zhenfa.block.base.BaseBlock;
 import io.github.zimoyin.zhenfa.block.base.BlockRegterTables;
 import io.github.zimoyin.zhenfa.item.base.BaseItem;
@@ -7,6 +8,7 @@ import io.github.zimoyin.zhenfa.item.base.ItemRegterTables;
 import io.github.zimoyin.zhenfa.utils.Lang;
 import net.minecraft.data.DataGenerator;
 import net.minecraftforge.common.data.LanguageProvider;
+import org.slf4j.Logger;
 
 import static io.github.zimoyin.zhenfa.datagen.Config.DataGenModId;
 
@@ -16,6 +18,7 @@ import static io.github.zimoyin.zhenfa.datagen.Config.DataGenModId;
  */
 public class LanguageProviders extends LanguageProvider {
     private final Lang.LangType currentFileLang;
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     public LanguageProviders(DataGenerator gen, Lang.LangType type) {
         super(gen, DataGenModId, type.getName());
@@ -31,8 +34,16 @@ public class LanguageProviders extends LanguageProvider {
             if (data.isGenerated()) {
                 for (Lang lang : data.getGeneratedData().lang()) {
                     if (lang.getLange().equals(currentFileLang)) {
-                        if (lang.getKey() == null) add(data.getBlock(), lang.getName());
-                        else add(lang.getKey(), lang.getName());
+                        try {
+                            if (lang.getKey() == null) add(data.getBlock(), lang.getName());
+                            else add(lang.getKey(), lang.getName());
+                        } catch (IllegalStateException e) {
+                            if (e.getMessage().contains("Duplicate translation key")) {
+                                LOGGER.warn("Failed to add language information:{}", e.getMessage());
+                            }else {
+                                LOGGER.error("Failed to add language information:{}", e.getMessage(),e);
+                            }
+                        }
                     }
                 }
             }
@@ -45,8 +56,16 @@ public class LanguageProviders extends LanguageProvider {
             if (data.isGenerated()) {
                 for (Lang lang : data.getGeneratedData().lang()) {
                     if (lang.getLange().equals(currentFileLang)) {
-                        if (lang.getKey() == null) add(data.getItem(), lang.getName());
-                        else add(lang.getKey(), lang.getName());
+                        try {
+                            if (lang.getKey() == null) add(data.getItem(), lang.getName());
+                            else add(lang.getKey(), lang.getName());
+                        } catch (IllegalStateException e) {
+                            if (e.getMessage().contains("Duplicate translation key")) {
+                                LOGGER.warn("Failed to add language information:{}", e.getMessage());
+                            }else {
+                                LOGGER.error("Failed to add language information:{}", e.getMessage(),e);
+                            }
+                        }
                     }
                 }
             }

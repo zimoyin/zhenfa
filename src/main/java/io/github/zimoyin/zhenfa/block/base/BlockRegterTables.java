@@ -3,13 +3,18 @@ package io.github.zimoyin.zhenfa.block.base;
 import com.google.common.base.Supplier;
 import com.mojang.datafixers.DSL;
 import com.mojang.logging.LogUtils;
+import io.github.zimoyin.zhenfa.utils.ResourcesUtils;
 import io.github.zimoyin.zhenfa.utils.ScanResultUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -20,6 +25,7 @@ import org.slf4j.Logger;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.*;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +45,7 @@ public class BlockRegterTables {
 
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final HashMap<Class<?>, BaseBlock.Data> BLOCK_DATA_MAP = new HashMap<>();
+    private static final ArrayList<BaseBlock.Data> BLOCK_DATA_LIST = new ArrayList<>();
     private static final HashMap<Class<?>, RegistryObject<BlockEntityType<?>>> BLOCK_ENTITY_DATA_MAP = new HashMap<>();
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MOD_ID);
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITIES, MOD_ID);
@@ -54,8 +61,16 @@ public class BlockRegterTables {
         return BLOCK_DATA_MAP.get(cls);
     }
 
+    /**
+     * 获取所有注册的方块数据.
+     * 一部分数据来自于 BLOCK_DATA_MAP
+     * 另一部分数据来自于 BLOCK_DATA_LIST
+     */
     public static List<BaseBlock.Data> getDataList() {
-        return BLOCK_DATA_MAP.values().stream().toList();
+        ArrayList<BaseBlock.Data> objects = new ArrayList<>();
+        objects.addAll(BLOCK_DATA_LIST);
+        objects.addAll(BLOCK_DATA_MAP.values());
+        return objects;
     }
 
     /**
@@ -82,8 +97,8 @@ public class BlockRegterTables {
             Class<?> clazz;
             try {
                 clazz = Class.forName(cls);
-                if (Block.class.isAssignableFrom(clazz)) {
-                    registerBlockAndBlockItem((Class<? extends Block>) clazz);
+                if (Block.class.isAssignableFrom(clazz) && clazz.getAnnotation(RegisterBlock.class) != null) {
+                    register((Class<? extends Block>) clazz);
                     LOGGER.info("register block {}", clazz);
                 }
             } catch (Exception e) {
@@ -122,10 +137,35 @@ public class BlockRegterTables {
         }
     }
 
-    public static void registerBlockAndBlockItem(Class<? extends Block> cls) {
+    /**
+     * 注册方块和物品
+     *
+     * @param id         方块的 ID，他将和方块物品的ID一致
+     * @param properties 方块属性 默认： BlockBehaviour.Properties.of(Material.STONE).strength(1.5f, 6)
+     * @param tab        物品栏 默认： CreativeModeTab.TAB_BUILDING_BLOCKS
+     * @param dataClas   数据生成类 默认：BaseGeneratedBlockData
+     */
+    public static BaseBlock.Data register(String id, BlockBehaviour.Properties properties, CreativeModeTab tab, Class<? extends BaseGeneratedBlockData> dataClas) {
+        if (id == null) throw new IllegalArgumentException("id cannot be null");
+        if (properties == null) properties = BlockBehaviour.Properties.of(Material.STONE).strength(1.5f, 6f);
+        if (tab == null) tab = CreativeModeTab.TAB_BUILDING_BLOCKS;
+        if (dataClas == null) dataClas = BaseGeneratedBlockData.class;
+        BlockBehaviour.Properties finalProperties = properties;
+        CreativeModeTab finalTab = tab;
+        RegistryObject<Block> blockRegistryObject = BLOCKS.register(id, () -> new BaseBlock(finalProperties));
+        RegistryObject<BlockItem> itemRegistryObject = ITEMS.register(id, () -> new BlockItem(blockRegistryObject.get(), new Item.Properties().tab(finalTab)));
+        BaseBlock.Data data = new BaseBlock.Data(blockRegistryObject, itemRegistryObject, null, null, null).getGeneratedData(dataClas).setBlockId(id);
+        BLOCK_DATA_LIST.add(data);
+        return data;
+    }
+
+    /**
+     * 自动注册方块和方块物品。该注册方法需要 cls 上具有 RegisterBlock 注解
+     */
+    public static void register(Class<? extends Block> cls) {
         RegisterBlock annotation = cls.getAnnotation(RegisterBlock.class);
         if (annotation == null) {
-            LOGGER.warn("Failed to register block; Class {} has no annotation @RegisterBlock", cls.getName());
+            LOGGER.error("Failed to register block; Class {} has no annotation @RegisterBlock", cls.getName());
             return;
         }
 
@@ -146,7 +186,7 @@ public class BlockRegterTables {
         if (BlockEntity.class.isAssignableFrom(blockEntity) && blockEntity != BlockEntity.class) {
             registryBlockEntityType = registerBlockEntity(blockEntity, blockRegistryObject, blockId);
         }
-        BaseBlock.Data data = new BaseBlock.Data(blockRegistryObject, itemRegistryObject, registryBlockEntityType,cls, annotation);
+        BaseBlock.Data data = new BaseBlock.Data(blockRegistryObject, itemRegistryObject, registryBlockEntityType, cls, annotation);
         setData(data);
 
         if (isInjectData) {

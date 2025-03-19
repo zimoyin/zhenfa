@@ -1,5 +1,8 @@
 package io.github.zimoyin.zhenfa.utils;
 
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+
 /**
  * 方块的语言描述
  */
@@ -26,6 +29,25 @@ public class Lang {
 
     public Lang(LangType lange, String key, String name) {
         this.key = key;
+        this.name = name;
+        this.lange = lange;
+        this.groupId = null;
+        this.groupName = null;
+        this.groupPrefix = "itemGroup.";
+    }
+
+    public Lang(LangType lange, Item key, String name) {
+        this.key = key.getDescriptionId();
+        this.name = name;
+        this.lange = lange;
+        this.groupId = null;
+        this.groupName = null;
+        this.groupPrefix = "itemGroup.";
+    }
+
+
+    public Lang(LangType lange, Block key, String name) {
+        this.key = key.getDescriptionId();
         this.name = name;
         this.lange = lange;
         this.groupId = null;

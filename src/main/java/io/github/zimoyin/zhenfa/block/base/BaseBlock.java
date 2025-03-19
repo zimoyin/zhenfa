@@ -13,15 +13,17 @@ import net.minecraft.world.level.material.Material;
 import net.minecraftforge.registries.RegistryObject;
 import org.slf4j.Logger;
 
+import java.util.Objects;
+
 /**
  * 这是一个基础方块类，继承本类后，在子类上创建一个@RegisterBlock注解，即可自动注册方块和方块物品。<br/>
  * 关于方块的材质和方块物品的材质问题，查阅文档即可。推荐使用 BaseGeneratedBlockData 进行代码生成
  *
- * @see BaseGeneratedBlockData
  * @author : zimo
  * &#064;date  : 2025/03/16
+ * @see BaseGeneratedBlockData
  */
-public abstract class BaseBlock extends Block {
+public class BaseBlock extends Block {
 
     public BaseBlock(Material material) {
         super(BlockBehaviour.Properties.of(material).strength(1.5F, 6.0F));
@@ -70,6 +72,7 @@ public abstract class BaseBlock extends Block {
     /**
      * 设置挖掘等级, 只有符合该挖掘等级才能挖掘<br/>
      * 注意： 你还需要设置 setToolType
+     *
      * @see BaseGeneratedBlockData#tags
      * @deprecated 新版本开始将使用 tags 来判断是否可以挖掘
      */
@@ -86,6 +89,7 @@ public abstract class BaseBlock extends Block {
     /**
      * 设置挖掘工具，只有符合该工具的才能进行挖掘<br/>
      * 注意： 你还需要设置 setHarvestLevel
+     *
      * @see BaseGeneratedBlockData#tags
      * @deprecated 新版本开始将使用 tags 来判断是否可以挖掘
      */
@@ -109,7 +113,7 @@ public abstract class BaseBlock extends Block {
         if (toolType == ToolType.NONE) return true;
 
         return switch (toolType) {
-            case PICKAXE, AXE, SHOVEL, HOE,SWORD-> {
+            case PICKAXE, AXE, SHOVEL, HOE, SWORD -> {
                 if (!(player.getMainHandItem().getItem() instanceof TieredItem digger)) yield false;
                 yield digger.getTier().getLevel() >= harvestLevel;
             }
@@ -122,7 +126,7 @@ public abstract class BaseBlock extends Block {
         if (toolType == null || harvestLevel == Integer.MAX_VALUE) {
             return super.defaultDestroyTime();
         }
-        return super.defaultDestroyTime()/1.25f;
+        return super.defaultDestroyTime() / 1.25f;
     }
 
     /**
@@ -131,6 +135,7 @@ public abstract class BaseBlock extends Block {
     public static class Data {
         private static final Logger LOGGER = LogUtils.getLogger();
         private BaseGeneratedBlockData data;
+        private String blockId;
         private final RegistryObject<Block> blockObj;
         private final RegistryObject<BlockItem> itemObj;
         private final RegistryObject<BlockEntityType<?>> blockEntityTypeObj;
@@ -154,29 +159,62 @@ public abstract class BaseBlock extends Block {
         }
 
         public String getBlockId() {
-            if (annotation.value() == null || annotation.value().isEmpty()) return cls.getSimpleName().toLowerCase();
-            return annotation.value();
+            if (annotation != null) {
+                String annotationValue = annotation.value();
+                if (annotationValue != null && !annotationValue.isEmpty()) {
+                    return annotationValue;
+                }
+            }
+            if (cls != null) {
+                return cls.getSimpleName().toLowerCase();
+            }
+            return Objects.requireNonNullElseGet(blockId, () -> blockObj.get().getRegistryName().getPath());
         }
 
         public String getItemId() {
-            if (annotation.itemId() == null || annotation.itemId().isEmpty()) return getBlockId();
+            if (annotation == null || annotation.itemId() == null || annotation.itemId().isEmpty()) return getBlockId();
             return annotation.itemId();
         }
 
         public boolean isGenerated() {
-            return annotation.isGenerated();
+            if (annotation != null) return annotation.isGenerated();
+            return data != null;
         }
 
         public BaseGeneratedBlockData getGeneratedData() {
             try {
                 if (data == null) {
-                    data = annotation.generatedData().getConstructor(Data.class).newInstance(this);
+                    if (annotation != null) {
+                        data = annotation.generatedData().getConstructor(Data.class).newInstance(this);
+                    }
                 }
             } catch (Exception e) {
                 data = new BaseGeneratedBlockData(this);
                 LOGGER.error("\n!!!!! ERROR !!!!!!\nFailed to create generated data for block {}\n@See: Please set it as public static\n", annotation.generatedData(), e);
             }
             return data;
+        }
+
+        public Data getGeneratedData(Class<? extends BaseGeneratedBlockData> dataClas) {
+            if (dataClas == null) return this;
+            try {
+                if (data == null) {
+                    data = dataClas.getConstructor(Data.class).newInstance(this);
+                }
+            } catch (Exception e) {
+                data = new BaseGeneratedBlockData(this);
+                LOGGER.error("\n!!!!! ERROR !!!!!!\nFailed to create generated data for block {}\n@See: Please set it as public static\n", annotation.generatedData(), e);
+            }
+            return this;
+        }
+
+        /**
+         * 后设置 id 仅在不使用反射注册的时候进行传入
+         */
+        public Data setBlockId(String blockId) {
+            if (blockId == null) return this;
+            this.blockId = blockId;
+            return this;
         }
 
         public RegistryObject<Block> getBlockObj() {
