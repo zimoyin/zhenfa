@@ -14,8 +14,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static io.github.zimoyin.zhenfa.utils.ResourcesUtils.validateResourcePath;
 
@@ -27,7 +25,9 @@ public class CreativeModeTabBuilder {
     private final String label; // 标签的注册名（小写和下划线）
     private Component displayName; // 本地化显示名称
     private ItemStack icon; // 默认图标
-    private final List<Supplier<? extends Item>> items = new ArrayList<>(); // 待添加的物品
+    private final List<Supplier<? extends Item>> supplierItems = new ArrayList<>(); // 待添加的物品
+    private final List<Item> items = new ArrayList<>(); // 待添加的物品
+
     // 构造函数（必须指定标签名）
     public CreativeModeTabBuilder(String label) {
         this.label = label;
@@ -51,18 +51,18 @@ public class CreativeModeTabBuilder {
         this.icon = itemStack;
         return this;
     }
-
-    // 添加单个物品到标签
-    public CreativeModeTabBuilder addItem(Supplier<? extends Item> itemSupplier) {
-        this.items.add(itemSupplier);
-        return this;
-    }
-
     // 添加多个物品到标签
-    public CreativeModeTabBuilder addItems(Supplier<? extends Item>... itemSuppliers) {
-        this.items.addAll(Arrays.asList(itemSuppliers));
+    public CreativeModeTabBuilder addItem(Supplier<? extends Item>... itemSuppliers) {
+        this.supplierItems.addAll(Arrays.asList(itemSuppliers));
         return this;
     }
+
+    public CreativeModeTabBuilder addItem(Item... items) {
+        this.items.addAll(Arrays.asList(items));
+        return this;
+    }
+
+
 
     // 构建并注册 CreativeModeTab
     public CreativeModeTab build() {
@@ -84,10 +84,10 @@ public class CreativeModeTabBuilder {
 
             @Override
             public void fillItemList(NonNullList<ItemStack> itemList) {
+                super.fillItemList(itemList);
                 // 添加默认物品（如果有的话）
-                if (!items.isEmpty()) {
-                    items.forEach(itemSupplier -> itemList.add(new ItemStack(itemSupplier.get())));
-                }
+                supplierItems.forEach(itemSupplier -> itemList.add(new ItemStack(itemSupplier.get())));
+                items.forEach(item -> itemList.add(new ItemStack(item)));
             }
         };
     }
