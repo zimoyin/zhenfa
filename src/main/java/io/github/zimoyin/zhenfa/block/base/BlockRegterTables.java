@@ -118,7 +118,7 @@ public class BlockRegterTables {
      * @return 包含注册信息的数据容器
      */
     public static BaseBlock.Data register(String id, Function<BaseBlock.Data, BaseGeneratedBlockData> function) {
-        return register(id, null, null, function);
+        return register(id, (BlockBehaviour.Properties) null, null, function);
     }
 
     /**
@@ -163,6 +163,73 @@ public class BlockRegterTables {
         CreativeModeTab finalTab = tab;
         RegistryObject<Block> blockRegistryObject = BLOCKS.register(id, () -> new BaseBlock(finalProperties));
         RegistryObject<BlockItem> itemRegistryObject = ITEMS.register(id, () -> new BlockItem(blockRegistryObject.get(), new Item.Properties().tab(finalTab)));
+        BaseBlock.Data data = new BaseBlock.Data(blockRegistryObject, itemRegistryObject, null, null, null).setBlockId(id);
+        if (function != null) data.setGeneratedData(function.apply(data));
+        BLOCK_DATA_LIST.add(data);
+        return data;
+    }
+
+    /**
+     * 注册方块和物品
+     *
+     * @param id            方块的 ID，他将和方块物品的ID一致
+     * @param supplierBlock 方块工厂
+     * @param function      数据生成器，用于生成适用于当前方块的数据
+     */
+    public static BaseBlock.Data register(String id, Supplier<? extends Block> supplierBlock, Function<BaseBlock.Data, BaseGeneratedBlockData> function) {
+        return register(id, (CreativeModeTab) null, supplierBlock, function);
+    }
+
+
+    /**
+     * 注册方块和物品
+     *
+     * @param id            方块的 ID，他将和方块物品的ID一致
+     * @param tab           物品栏 默认： CreativeModeTab.TAB_BUILDING_BLOCKS
+     * @param supplierBlock 方块工厂
+     * @param function      数据生成器，用于生成适用于当前方块的数据
+     */
+    public static BaseBlock.Data register(String id, CreativeModeTab tab, Supplier<? extends Block> supplierBlock, Function<BaseBlock.Data, BaseGeneratedBlockData> function) {
+        return register(id, new Item.Properties().tab(tab), supplierBlock, function);
+    }
+
+    /**
+     * 注册方块和物品
+     *
+     * @param id            方块的 ID，他将和方块物品的ID一致
+     * @param properties    方块物品属性 默认： BlockBehaviour.Properties.of(Material.STONE).strength(1.5f, 6)
+     * @param supplierBlock 方块工厂
+     * @param function      数据生成器，用于生成适用于当前方块的数据
+     */
+    public static BaseBlock.Data register(String id, Item.Properties properties, Supplier<? extends Block> supplierBlock, Function<BaseBlock.Data, BaseGeneratedBlockData> function) {
+        if (id == null) throw new IllegalArgumentException("id cannot be null");
+        if (supplierBlock == null) throw new IllegalArgumentException("sup cannot be null");
+        if (properties == null) properties = new Item.Properties().tab(CreativeModeTab.TAB_BUILDING_BLOCKS);
+
+        Item.Properties finalProperties = properties;
+        RegistryObject<Block> blockRegistryObject = BLOCKS.register(id, supplierBlock);
+        RegistryObject<BlockItem> itemRegistryObject = ITEMS.register(id, () -> new BlockItem(blockRegistryObject.get(), finalProperties));
+        BaseBlock.Data data = new BaseBlock.Data(blockRegistryObject, itemRegistryObject, null, null, null).setBlockId(id);
+        if (function != null) data.setGeneratedData(function.apply(data));
+        BLOCK_DATA_LIST.add(data);
+        return data;
+    }
+
+    /**
+     * 注册方块和物品
+     *
+     * @param id            方块的 ID，他将和方块物品的ID一致
+     * @param supplierBlock 方块工厂
+     * @param supplierItem  方块物品工厂
+     * @param function      数据生成器，用于生成适用于当前方块的数据
+     */
+    public static BaseBlock.Data register(String id, Supplier<? extends Block> supplierBlock, Supplier<? extends BlockItem> supplierItem, Function<BaseBlock.Data, BaseGeneratedBlockData> function) {
+        if (id == null) throw new IllegalArgumentException("id cannot be null");
+        if (supplierBlock == null) throw new IllegalArgumentException("sup cannot be null");
+        if (supplierItem == null) throw new IllegalArgumentException("sup cannot be null");
+
+        RegistryObject<Block> blockRegistryObject = BLOCKS.register(id, supplierBlock);
+        RegistryObject<BlockItem> itemRegistryObject = ITEMS.register(id, supplierItem);
         BaseBlock.Data data = new BaseBlock.Data(blockRegistryObject, itemRegistryObject, null, null, null).setBlockId(id);
         if (function != null) data.setGeneratedData(function.apply(data));
         BLOCK_DATA_LIST.add(data);

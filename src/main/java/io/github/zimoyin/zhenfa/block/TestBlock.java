@@ -11,8 +11,10 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Material;
 
 import java.util.List;
+import java.util.Properties;
 
 /**
+ * 创建一个方块
  * @author : zimo
  * @date : 2025/03/16
  */

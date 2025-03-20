@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static io.github.zimoyin.zhenfa.Zhenfa.MOD_ID;
 import static io.github.zimoyin.zhenfa.utils.SupplierFactoryUtils.createFactory;
@@ -153,6 +154,35 @@ public class ItemRegterTables {
         return data;
     }
 
+
+    /**
+     * 注册物品
+     * @param id            物品ID
+     * @param itemFactory   物品生成器
+     * @return              返回注册的数据
+     */
+    public static BaseItem.Data register(String id, Supplier<? extends Item> itemFactory) {
+        return register(id, itemFactory, (Class<? extends BaseGeneratedItemData>) null);
+    }
+
+    /**
+     * 注册物品
+     * @param id            物品ID
+     * @param itemFactory   物品生成器
+     * @param cls           自动生成JSON数据的类
+     * @return              返回注册的数据
+     */
+    public static BaseItem.Data register(String id, Supplier<? extends Item> itemFactory, Class<? extends BaseGeneratedItemData> cls) {
+        if (id == null) throw new IllegalArgumentException("id cannot be null");
+        if (itemFactory == null) throw new IllegalArgumentException("sup cannot be null");
+        if (cls == null) cls = BaseGeneratedItemData.class;
+
+        RegistryObject<Item> itemRegistryObject = ITEMS.register(id, itemFactory);
+        BaseItem.Data data = new BaseItem.Data(itemRegistryObject, null, null).setGeneratedDataClass(cls).setItemId(id);
+        DATA_LIST.add(data);
+        return data;
+    }
+
     /**
      * 注册物品
      * @param id            物品ID
@@ -188,6 +218,25 @@ public class ItemRegterTables {
 
         Item.Properties finalProperties = properties;
         RegistryObject<Item> itemRegistryObject = ITEMS.register(id, () -> new BaseItem(finalProperties));
+        BaseItem.Data data = new BaseItem.Data(itemRegistryObject, null, null).setItemId(id);
+        if (function != null) data.setGeneratedData(function.apply(data));
+        DATA_LIST.add(data);
+        return data;
+    }
+
+    /**
+     * 注册物品
+     * @param id            物品ID
+     * @param itemFactory   物品生成器
+     * @param function      数据生成器，用于生成适用于当前物品的数据
+     * @return              返回注册的数据
+     */
+    public static BaseItem.Data register(String id, Supplier<? extends Item> itemFactory, Function<BaseItem.Data, BaseGeneratedItemData> function) {
+        BaseGeneratedItemData gdata;
+        if (id == null) throw new IllegalArgumentException("id cannot be null");
+        if (itemFactory == null) throw new IllegalArgumentException("sup cannot be null");
+
+        RegistryObject<Item> itemRegistryObject = ITEMS.register(id,itemFactory);
         BaseItem.Data data = new BaseItem.Data(itemRegistryObject, null, null).setItemId(id);
         if (function != null) data.setGeneratedData(function.apply(data));
         DATA_LIST.add(data);
