@@ -3,10 +3,15 @@ package io.github.zimoyin.zhenfa.datagen.provider;
 import com.mojang.logging.LogUtils;
 import io.github.zimoyin.zhenfa.block.base.BaseBlock;
 import io.github.zimoyin.zhenfa.block.base.BlockRegterTables;
+import io.github.zimoyin.zhenfa.creativetab.base.BaseCreativeModeTab;
+import io.github.zimoyin.zhenfa.creativetab.base.CreativeModeTabBuilder;
 import io.github.zimoyin.zhenfa.item.base.BaseItem;
 import io.github.zimoyin.zhenfa.item.base.ItemRegterTables;
 import io.github.zimoyin.zhenfa.utils.Lang;
 import net.minecraft.data.DataGenerator;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraftforge.common.data.LanguageProvider;
 import org.slf4j.Logger;
 
@@ -40,8 +45,8 @@ public class LanguageProviders extends LanguageProvider {
                         } catch (IllegalStateException e) {
                             if (e.getMessage().contains("Duplicate translation key")) {
                                 LOGGER.warn("Failed to add language information:{}", e.getMessage());
-                            }else {
-                                LOGGER.error("Failed to add language information:{}", e.getMessage(),e);
+                            } else {
+                                LOGGER.error("Failed to add language information:{}", e.getMessage(), e);
                             }
                         }
                     }
@@ -62,8 +67,26 @@ public class LanguageProviders extends LanguageProvider {
                         } catch (IllegalStateException e) {
                             if (e.getMessage().contains("Duplicate translation key")) {
                                 LOGGER.warn("Failed to add language information:{}", e.getMessage());
-                            }else {
-                                LOGGER.error("Failed to add language information:{}", e.getMessage(),e);
+                            } else {
+                                LOGGER.error("Failed to add language information:{}", e.getMessage(), e);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // 创造标签页
+        for (CreativeModeTab tab : CreativeModeTabBuilder.TABS) {
+            if (tab instanceof BaseCreativeModeTab bcmb) {
+                for (Lang lang : bcmb.getLang()) {
+                    if (lang.getLange().equals(currentFileLang)) {
+                        try {
+                            add(bcmb.getLangId(), lang.getName());
+                        } catch (IllegalStateException e) {
+                            if (e.getMessage().contains("Duplicate translation key")) {
+                                LOGGER.warn("Failed to add language information:{}", e.getMessage());
+                            } else {
+                                LOGGER.error("Failed to add language information:{}", e.getMessage(), e);
                             }
                         }
                     }

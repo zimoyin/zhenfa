@@ -2,8 +2,10 @@ package io.github.zimoyin.zhenfa.creativetab.base;
 
 import io.github.zimoyin.zhenfa.item.base.BaseItem;
 import io.github.zimoyin.zhenfa.item.base.ItemRegterTables;
+import io.github.zimoyin.zhenfa.utils.Lang;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -27,6 +29,10 @@ public class CreativeModeTabBuilder {
     private ItemStack icon; // 默认图标
     private final List<Supplier<? extends Item>> supplierItems = new ArrayList<>(); // 待添加的物品
     private final List<Item> items = new ArrayList<>(); // 待添加的物品
+    private int order = -1;
+    private ArrayList<Lang> lang = new ArrayList<>();
+
+    public static final NonNullList<CreativeModeTab> TABS = NonNullList.create();
 
     // 构造函数（必须指定标签名）
     public CreativeModeTabBuilder(String label) {
@@ -34,9 +40,29 @@ public class CreativeModeTabBuilder {
         validateResourcePath(label);
     }
 
-    // 设置本地化显示名称（通过语言文件）
+    public CreativeModeTabBuilder lang(Lang... lang) {
+        this.lang.addAll(Arrays.asList(lang));
+        return this;
+    }
+
+    /**
+     * ID Name
+     */
     public CreativeModeTabBuilder displayName(Component displayName) {
         this.displayName = displayName;
+        return this;
+    }
+
+    public CreativeModeTabBuilder order(int order) {
+        this.order = order;
+        return this;
+    }
+
+    /**
+     * ID Name
+     */
+    public CreativeModeTabBuilder displayName(String displayName) {
+        this.displayName = new TranslatableComponent("itemGroup." + displayName);
         return this;
     }
 
@@ -51,6 +77,7 @@ public class CreativeModeTabBuilder {
         this.icon = itemStack;
         return this;
     }
+
     // 添加多个物品到标签
     public CreativeModeTabBuilder addItem(Supplier<? extends Item>... itemSuppliers) {
         this.supplierItems.addAll(Arrays.asList(itemSuppliers));
@@ -63,7 +90,6 @@ public class CreativeModeTabBuilder {
     }
 
 
-
     // 构建并注册 CreativeModeTab
     public CreativeModeTab build() {
         if (label == null || label.isEmpty()) {
@@ -71,7 +97,7 @@ public class CreativeModeTabBuilder {
         }
 
         // 创建 CreativeModeTab
-        return new CreativeModeTab(label) {
+        return new BaseCreativeModeTab(order, label, lang) {
             @Override
             public @NotNull ItemStack makeIcon() {
                 return icon != null ? icon : new ItemStack(ItemRegterTables.getDataList().stream().findFirst().map(BaseItem.Data::getItem).orElse(Items.DIAMOND));

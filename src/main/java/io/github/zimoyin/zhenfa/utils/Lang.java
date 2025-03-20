@@ -9,9 +9,6 @@ import net.minecraft.world.level.block.Block;
 public class Lang {
     LangType lange;
     String name;
-    String groupPrefix;
-    String groupId;
-    String groupName;
     String key;
 
     /**
@@ -21,9 +18,6 @@ public class Lang {
     public Lang(LangType lange, String name) {
         this.lange = lange;
         this.name = name;
-        this.groupPrefix = "itemGroup.";
-        this.groupId = null;
-        this.groupName = null;
         this.key = null;
     }
 
@@ -31,18 +25,12 @@ public class Lang {
         this.key = key;
         this.name = name;
         this.lange = lange;
-        this.groupId = null;
-        this.groupName = null;
-        this.groupPrefix = "itemGroup.";
     }
 
     public Lang(LangType lange, Item key, String name) {
         this.key = key.getDescriptionId();
         this.name = name;
         this.lange = lange;
-        this.groupId = null;
-        this.groupName = null;
-        this.groupPrefix = "itemGroup.";
     }
 
 
@@ -50,34 +38,8 @@ public class Lang {
         this.key = key.getDescriptionId();
         this.name = name;
         this.lange = lange;
-        this.groupId = null;
-        this.groupName = null;
-        this.groupPrefix = "itemGroup.";
     }
 
-    /**
-     * 带分组的方块语言描述
-     *
-     * @param groupId   物品组的ID
-     * @param groupName 物品组的名称
-     */
-    public Lang(LangType lange, String name, String groupId, String groupName) {
-        this.lange = lange;
-        this.name = name;
-        this.groupPrefix = "itemGroup.";
-        this.groupId = groupId;
-        this.groupName = groupName;
-        this.key = null;
-    }
-
-    public Lang(LangType lange, String name, String groupPrefix, String groupId, String groupName) {
-        this.lange = lange;
-        this.name = name;
-        this.groupPrefix = groupPrefix;
-        this.groupId = groupId;
-        this.groupName = groupName;
-        this.key = null;
-    }
 
     public LangType getLange() {
         return lange;
@@ -85,22 +47,6 @@ public class Lang {
 
     public String getName() {
         return name;
-    }
-
-    public String getGroupPrefix() {
-        return groupPrefix;
-    }
-
-    public String getGroupId() {
-        return groupId;
-    }
-
-    public String getGroupIdWithPrefix() {
-        return groupPrefix + groupId;
-    }
-
-    public String getGroupName() {
-        return groupName;
     }
 
     public String getKey() {
@@ -115,20 +61,25 @@ public class Lang {
         this.name = name;
     }
 
-    public void setGroupPrefix(String groupPrefix) {
-        this.groupPrefix = groupPrefix;
-    }
-
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
-    }
-
-    public void setGroupName(String groupName) {
-        this.groupName = groupName;
-    }
-
     public void setKey(String key) {
         this.key = key;
+    }
+
+    public static Lang of(String name) {
+        return new Lang(LangType.EN_US, name);
+    }
+
+
+    public static Lang of(String key, String name) {
+        return new Lang(LangType.EN_US, key, name);
+    }
+
+    public static Lang of(LangType type, String key, String name) {
+        return new Lang(type, key, name);
+    }
+
+    public static Lang of(LangType type, String name) {
+        return new Lang(type, name);
     }
 
     public static enum LangType {
