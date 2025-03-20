@@ -10,6 +10,8 @@ import net.minecraft.data.tags.ItemTagsProvider;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.common.data.ExistingFileHelper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import static io.github.zimoyin.zhenfa.datagen.Config.DataGenModId;
@@ -19,20 +21,29 @@ public class ItemTagProviders extends ItemTagsProvider {
     public ItemTagProviders(DataGenerator generator, BlockTagsProvider blockTags, ExistingFileHelper helper) {
         super(generator, blockTags, DataGenModId, helper);
     }
+    private static final Logger LOGGER = LogManager.getLogger();
 
     @Override
     protected void addTags() {
         for (BaseBlock.Data data : BlockRegterTables.getDataList()) {
             if (data.isGenerated()) {
                 for (TagKey<Item> itemTag : data.getGeneratedData().itemTags()) {
-                    tag(itemTag).add(data.getBlockItem());
+                    try {
+                        tag(itemTag).add(data.getBlockItem());
+                    }catch (Exception e){
+                        LOGGER.error("Failed addTags: {}", e.getMessage(), e);
+                    }
                 }
             }
         }
         for (BaseItem.Data data : ItemRegterTables.getDataList()) {
             if (data.isGenerated()) {
                 for (TagKey<Item> itemTag : data.getGeneratedData().tags()) {
-                    tag(itemTag).add(data.getItem());
+                    try {
+                        tag(itemTag).add(data.getItem());
+                    }catch (Exception e){
+                        LOGGER.error("Failed addTags: {}", e.getMessage(), e);
+                    }
                 }
             }
         }

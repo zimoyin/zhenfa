@@ -18,7 +18,7 @@ import java.util.List;
  * &#064;date : 2025/03/19
  */
 // 没有该注解程序无法扫描到此类就无法加载类无法执行 Static
-@BlockRegterTables.RegisterBlock
+@BlockRegterTables.RegisterBlock(isRegister = false)
 public class Test4Blocks {
     // register 有众多重载，除了 register(Class) 是自动调用以外其他的都是可以调用的
     // 不是通过 register(Class) 注册的无法通过 getData(cls) 获取数据。但是 getDataList 还是会包含

@@ -65,6 +65,7 @@ public class BaseGeneratedBlockData {
      */
     public void registerItemModel(ItemModelProvider provider) {
         String itemPath = "item/" + data.getItemId();
+        // 优先使用指定的 item 模型，如果没有这使用系统生成的 blockItem 模型
         if (ResourcesUtils.getResource("/assets/" + DataGenModId + "/textures/" + itemPath+".png") != null) {
             provider.singleTexture(data.getItemId(), provider.mcLoc("item/generated"), "layer0", provider.modLoc(itemPath));
         } else {

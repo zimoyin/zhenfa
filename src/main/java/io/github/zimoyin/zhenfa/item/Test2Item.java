@@ -1,5 +1,6 @@
 package io.github.zimoyin.zhenfa.item;
 
+import io.github.zimoyin.zhenfa.creativetab.CreativeTabs;
 import io.github.zimoyin.zhenfa.datagen.provider.Recipes;
 import io.github.zimoyin.zhenfa.item.base.BaseGeneratedItemData;
 import io.github.zimoyin.zhenfa.item.base.BaseItem;
@@ -16,6 +17,8 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author : zimo
  * &#064;date : 2025/03/19
@@ -31,8 +34,15 @@ public class Test2Item extends BaseItem {
     // 注册物品并生成数据类
     public static final Data ITEM_4 = ItemRegterTables.register("ctest4", data -> new BaseGeneratedItemData(data) {
         @Override
+        public List<Lang> lang() {
+            return List.of(new Lang(Lang.LangType.ZH_CN, "测试4"));
+        }
+    });
+
+    public static final Data ITEM_5 = ItemRegterTables.register("ctest5", CreativeTabs.TestCreativeTab, data -> new BaseGeneratedItemData(data) {
+        @Override
         public void registerRecipe(Recipes recipes) {
-            recipes.oneToOneConversionRecipe(data.getItem(), data.getItem(), "ctest4");
+            recipes.oneToOneConversionRecipe(data.getItem(), data.getItem(), "ctest5");
         }
     });
 }

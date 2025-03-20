@@ -5,6 +5,7 @@ import io.github.zimoyin.zhenfa.datagen.provider.LootTableProvider;
 import io.github.zimoyin.zhenfa.datagen.provider.Recipes;
 import io.github.zimoyin.zhenfa.utils.Lang;
 import io.github.zimoyin.zhenfa.utils.ResourcesUtils;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -51,17 +52,20 @@ public class BaseGeneratedItemData {
 
     /**
      * 注册方块物品的模型
-     * 默认情况下会寻找 /assets/[modid]/textures/item/[itemid.png] 是否存在如果不存在则使用 block/[blockid.png] 的模型
+     * 默认情况下会寻找 /assets/[modid]/textures/item/[itemid.png]
      */
     public void registerItemModel(ItemModelProvider provider) {
-        String itemPath = "item/" + data.getItemId();
-        provider.singleTexture(data.getItemId(), provider.mcLoc("item/generated"), "layer0", provider.modLoc(itemPath));
+        if (ResourcesUtils.getResource("/assets/" + DataGenModId + "/textures/item/" + data.getItemId() + ".png") != null) {
+            provider.singleTexture(data.getItemId(), provider.mcLoc("item/generated"), "layer0", provider.modLoc("item/" + data.getItemId()));
+        } else {
+            throw new IllegalStateException("Texture " + new ResourceLocation(data.getItemId(),"item/" + data.getItemId()) + " does not exist in any known resource pack");
+        }
     }
 
     /**
      * 合成表
-     * @param recipes 只提供了简单的合成表，如果需要更多的合成表请使用静态方法
      *
+     * @param recipes 只提供了简单的合成表，如果需要更多的合成表请使用静态方法
      */
     public void registerRecipe(Recipes recipes) {
 

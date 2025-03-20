@@ -111,7 +111,7 @@ public class BaseItem extends Item {
         }
 
         public Data setGeneratedData(BaseGeneratedItemData data) {
-            if (annotation == null && data != null && this.data != null) this.data = data;
+            if (annotation == null && data != null && this.data == null) this.data = data;
             return this;
         }
 

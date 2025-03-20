@@ -1,5 +1,6 @@
 package io.github.zimoyin.zhenfa.datagen.provider;
 
+import com.mojang.logging.LogUtils;
 import io.github.zimoyin.zhenfa.block.base.BaseBlock;
 import io.github.zimoyin.zhenfa.block.base.BlockRegterTables;
 import io.github.zimoyin.zhenfa.item.base.BaseItem;
@@ -12,6 +13,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.SimpleCookingSerializer;
 import net.minecraft.world.level.ItemLike;
+import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -29,7 +31,7 @@ import static io.github.zimoyin.zhenfa.Zhenfa.MOD_ID;
 public class Recipes extends RecipeProvider {
 
     private Consumer<FinishedRecipe> consumer;
-
+    private static final Logger LOGGER = LogUtils.getLogger();
     public Recipes(DataGenerator generatorIn) {
         super(generatorIn);
     }
@@ -39,13 +41,21 @@ public class Recipes extends RecipeProvider {
         this.consumer = consumer;
         for (BaseBlock.Data data : BlockRegterTables.getDataList()) {
             if (data.isGenerated()) {
-                data.getGeneratedData().registerBlockItemRecipe(this);
+                try {
+                    data.getGeneratedData().registerBlockItemRecipe(this);
+                }catch (Exception e){
+                    LOGGER.error("Failed registerItemRecipes: {}", e.getMessage(), e);
+                }
             }
         }
 
         for (BaseItem.Data data : ItemRegterTables.getDataList()) {
             if (data.isGenerated()) {
-                data.getGeneratedData().registerRecipe(this);
+                try {
+                    data.getGeneratedData().registerRecipe(this);
+                }catch (Exception e){
+                    LOGGER.error("Failed registerItemRecipes: {}", e.getMessage(), e);
+                }
             }
         }
     }

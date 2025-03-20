@@ -209,7 +209,7 @@ public class BaseBlock extends Block {
         }
 
         public Data setGeneratedData(BaseGeneratedBlockData apply) {
-            if (annotation == null && apply != null && data != null) this.data = apply;
+            if (annotation == null && apply != null && data == null) this.data = apply;
             return this;
         }
 

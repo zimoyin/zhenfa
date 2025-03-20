@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 
 import static io.github.zimoyin.zhenfa.Zhenfa.MOD_ID;
 import static io.github.zimoyin.zhenfa.item.base.ItemRegterTables.ITEMS;
+import static io.github.zimoyin.zhenfa.utils.ResourcesUtils.validateResourcePath;
 import static io.github.zimoyin.zhenfa.utils.SupplierFactoryUtils.createFactory;
 
 /**
@@ -98,9 +99,8 @@ public class BlockRegterTables {
                         Class<?> clazz = annotation.getTargetClass();
                         if (Block.class.isAssignableFrom(clazz)) {
                             register((Class<? extends Block>) clazz);
-                            LOGGER.info("register block {}", clazz);
-                        } else {
-                            LOGGER.error("Failed to register block; Class {} Not extends {}", annotation.getTargetClassName(), Block.class);
+                        } else if (clazz.getAnnotation(RegisterBlock.class).isRegister()) {
+                            LOGGER.error("Failed to register block; Class {} Not extends {}", annotation.getTargetClassName(), Block.class, new IllegalArgumentException());
                         }
                     } catch (Exception e) {
                         LOGGER.error("Failed to register block; Class {}", annotation.getTargetClassName(), e);
@@ -285,6 +285,7 @@ public class BlockRegterTables {
             LOGGER.error("Failed to register block; Class {} has no annotation @RegisterBlock", cls.getName());
             return;
         }
+        if (!annotation.isRegister()) return;
 
         String blockId = annotation.value();
         String itemId = annotation.itemId();
@@ -405,6 +406,11 @@ public class BlockRegterTables {
          */
         String itemId() default "";
 
+
+        /**
+         * 是否注册
+         */
+        boolean isRegister() default true;
 
         /**
          * 方块实体类

@@ -67,13 +67,12 @@ public class ItemRegterTables {
         ScanResultUtils.getModAnnotations(context)
                 .stream()
                 .filter(ScanResultUtils.AnnotationData::isClassAnnotation)
-                .filter(a -> a.isAnnotation(BlockRegterTables.RegisterBlock.class)).forEach(annotation -> {
+                .filter(a -> a.isAnnotation(RegisterItem.class)).forEach(annotation -> {
                     try {
                         Class<?> clazz = annotation.getTargetClass();
                         if (Item.class.isAssignableFrom(clazz)) {
                             register((Class<? extends Item>) clazz);
-                            LOGGER.info("register item {}", clazz);
-                        } else {
+                        } else if (clazz.getAnnotation(RegisterItem.class).isRegister()){
                             LOGGER.error("Failed to register item; Class {} Not extends {}", annotation.getTargetClassName(), Item.class.getName());
                         }
                     } catch (Exception e) {
@@ -204,6 +203,7 @@ public class ItemRegterTables {
             LOGGER.warn("Failed to register item; Class {} has no annotation @RegisterItem", cls.getName());
             return;
         }
+        if (!annotation.isRegister()) return;
 
         String itemId = annotation.value();
         boolean isInjectData = annotation.data();
@@ -256,6 +256,7 @@ public class ItemRegterTables {
          */
         boolean data() default false;
 
+        boolean isRegister() default true;
         /**
          * 是否生成物品数据
          */

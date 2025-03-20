@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -265,6 +266,7 @@ public class ScanResultUtils {
 
         /**
          * 判断被注解的类是否在指定的类的继承结构中。即是否是指定类的子类或者子孙类
+         *
          * @param cls 指定的类
          * @return 是否在指定类的继承结构中
          */
@@ -281,9 +283,9 @@ public class ScanResultUtils {
          * 递归方法：判断 internalName 表示的类是否等于 expectedSuperclassName，
          * 或者其父类链中是否存在 expectedSuperclassName。
          *
-         * @param internalName 目标类或当前递归类的内部名称（格式如 "com/example/MyClass"）
+         * @param internalName           目标类或当前递归类的内部名称（格式如 "com/example/MyClass"）
          * @param expectedSuperclassName 待比较的父类全限定名（例如 "java.lang.Object"）
-         * @param loader 用于加载类字节码资源的类加载器
+         * @param loader                 用于加载类字节码资源的类加载器
          * @return 如果 expectedSuperclassName 在 internalName 表示类的父类链中返回 true，否则 false
          */
         private boolean isAssignableFromInternal(String internalName, String expectedSuperclassName, ClassLoader loader) {
@@ -333,6 +335,13 @@ public class ScanResultUtils {
          */
         public String getAnnotationClassName() {
             return annotationData.annotationType().getClassName();
+        }
+
+        /**
+         * 通过反射获取注解的 Class 对象
+         */
+        public <T extends Annotation> Annotation getClassAnnotation(Class<T> tClass) throws ClassNotFoundException {
+            return getTargetClass().getAnnotation(tClass);
         }
 
         /**
