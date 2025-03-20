@@ -124,18 +124,18 @@ public class CreativeModeTabBuilder {
     }
 
     public static CreativeModeTab create(String label) {
-        return new CreativeModeTabBuilder(label).build();
+        return new CreativeModeTabBuilder(label).lang(Lang.of(label)).build();
     }
 
     public static CreativeModeTab create(String label, BaseItem.Data data) {
-        return new CreativeModeTabBuilder(label).icon(data.getItem()).build();
+        return new CreativeModeTabBuilder(label).lang(Lang.of(label)).icon(data.getItem()).build();
     }
 
     public static CreativeModeTab create(String label, Item item) {
-        return new CreativeModeTabBuilder(label).icon(item).build();
+        return new CreativeModeTabBuilder(label).lang(Lang.of(label)).icon(item).build();
     }
 
     public static CreativeModeTab create(String label, ItemStack item) {
-        return new CreativeModeTabBuilder(label).icon(item).build();
+        return new CreativeModeTabBuilder(label).lang(Lang.of(label)).icon(item).build();
     }
 }
