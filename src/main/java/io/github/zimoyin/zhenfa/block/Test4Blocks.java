@@ -17,12 +17,23 @@ import java.util.List;
  * @author : zimo
  * &#064;date : 2025/03/19
  */
-// 该注解仅仅是让框架将类读取到内存，从而让类自动去执行静态方法进行自己的初始化
+// 没有该注解程序无法扫描到此类就无法加载类无法执行 Static
 @BlockRegterTables.RegisterBlock
 public class Test4Blocks {
+    // register 有众多重载，除了 register(Class) 是自动调用以外其他的都是可以调用的
+    // 不是通过 register(Class) 注册的无法通过 getData(cls) 获取数据。但是 getDataList 还是会包含
+    public static final BaseBlock.Data TEST_BLOCK_DATA = BlockRegterTables.register("ctestblock4");
+    // 注册一个带有 generatedData class 的注册方式
+    public static final BaseBlock.Data TEST_BLOCK_DATA2 = BlockRegterTables.register("ctestblock5",  Test4GeneratedBlockData.class);
+    // 注册一个带有 generatedData instance 的注册方式
+    public static final BaseBlock.Data TEST_BLOCK_DATA3 = BlockRegterTables.register("ctestblock6", data -> new BaseGeneratedBlockData(data){
+        @Override
+        public List<Lang> lang() {
+            return List.of(new Lang(Lang.LangType.ZH_CN,"测试独立注册 id3"));
+        }
+    });
 
-    public static final BaseBlock.Data TEST_BLOCK_DATA = BlockRegterTables.register("id", null, null, Test4GeneratedBlockData.class);
-    public static final BaseBlock.Data TEST_BLOCK_DATA2 = BlockRegterTables.register("id2", null, null, Test4GeneratedBlockData.class);
+
 
     public static class Test4GeneratedBlockData extends BaseGeneratedBlockData {
         public Test4GeneratedBlockData(BaseBlock.Data data) {

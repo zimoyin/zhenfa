@@ -16,7 +16,7 @@ import java.util.List;
  * @author : zimo
  * @date : 2025/03/16
  */
-@BlockRegterTables.RegisterBlock(value = "test", data = true,generatedData = TestBlock.GeneratedData.class)
+@BlockRegterTables.RegisterBlock(value = "ctestblock1", data = true,generatedData = TestBlock.GeneratedData.class)
 public class TestBlock extends BaseBlock {
     // 会在合适的时间注入
     public static BaseBlock.Data RegisterBlockData = null;

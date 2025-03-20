@@ -18,6 +18,7 @@ import static io.github.zimoyin.zhenfa.datagen.Config.DataGenModId;
  */
 public class ItemModels extends ItemModelProvider {
     private static final Logger LOGGER = LogUtils.getLogger();
+
     public ItemModels(DataGenerator generator, ExistingFileHelper existingFileHelper) {
         super(generator, DataGenModId, existingFileHelper);
     }
@@ -28,18 +29,26 @@ public class ItemModels extends ItemModelProvider {
             if (data.isGenerated()) {
                 try {
                     data.getGeneratedData().registerItemModel(this);
-                }catch (Exception e){
-                    LOGGER.error("Failed registerItemModel: {}",e.getMessage(),e);
+                } catch (Exception e) {
+                    if (e.getMessage().contains("does not exist in any known resource pack")){
+                        LOGGER.error("Failed registerItemModel: {}", e.getMessage());
+                    }else {
+                        LOGGER.error("Failed registerItemModel: {}", e.getMessage(), e);
+                    }
                 }
             }
         }
 
         for (BaseItem.Data data : ItemRegterTables.getDataList()) {
-            if (data.isGenerated()){
+            if (data.isGenerated()) {
                 try {
                     data.getGeneratedData().registerItemModel(this);
-                }catch (Exception e){
-                    LOGGER.error("Failed registerItemModel: {}",e.getMessage(),e);
+                } catch (Exception e) {
+                    if (e.getMessage().contains("does not exist in any known resource pack")) {
+                        LOGGER.error("Failed registerItemModel: {}", e.getMessage());
+                    } else {
+                        LOGGER.error("Failed registerItemModel: {}", e.getMessage(), e);
+                    }
                 }
             }
         }

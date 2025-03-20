@@ -3,7 +3,6 @@ package io.github.zimoyin.zhenfa.block.base;
 import com.google.common.base.Supplier;
 import com.mojang.datafixers.DSL;
 import com.mojang.logging.LogUtils;
-import io.github.zimoyin.zhenfa.utils.ResourcesUtils;
 import io.github.zimoyin.zhenfa.utils.ScanResultUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.BlockItem;
@@ -29,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static io.github.zimoyin.zhenfa.Zhenfa.MOD_ID;
@@ -90,51 +90,168 @@ public class BlockRegterTables {
 
 
     public static void autoRegisterAll(FMLJavaModLoadingContext context) {
-        List<String> classes = ScanResultUtils.getModClasses(context);
-        for (String cls : classes) {
-            if (cls.equals(BaseBlock.class.getName())) continue;
-            if (cls.equals(BaseEntityBlock.class.getName())) continue;
-            Class<?> clazz;
-            try {
-                clazz = Class.forName(cls);
-                if (Block.class.isAssignableFrom(clazz) && clazz.getAnnotation(RegisterBlock.class) != null) {
-                    register((Class<? extends Block>) clazz);
-                    LOGGER.info("register block {}", clazz);
-                }
-            } catch (Exception e) {
-                LOGGER.error("Failed to register block; Class {}", cls, e);
-            }
-        }
+        ScanResultUtils.getModAnnotations(context)
+                .stream()
+                .filter(ScanResultUtils.AnnotationData::isClassAnnotation)
+                .filter(a -> a.isAnnotation(RegisterBlock.class)).forEach(annotation -> {
+                    try {
+                        Class<?> clazz = annotation.getTargetClass();
+                        if (Block.class.isAssignableFrom(clazz)) {
+                            register((Class<? extends Block>) clazz);
+                            LOGGER.info("register block {}", clazz);
+                        } else {
+                            LOGGER.error("Failed to register block; Class {} Not extends {}", annotation.getTargetClassName(), Block.class);
+                        }
+                    } catch (Exception e) {
+                        LOGGER.error("Failed to register block; Class {}", annotation.getTargetClassName(), e);
+                    }
+                });
         BLOCKS.register(context.getModEventBus());
         BLOCK_ENTITIES.register(context.getModEventBus());
     }
 
-    public static RegistryObject<BlockEntityType<?>> registerBlockEntity(Class<? extends BlockEntity> cls, RegistryObject<Block> blockRegistryObject, String blockId) {
-        // 通过反射获取构造函数
-        try {
-            // 获取构造函数（参数类型：BlockPos, BlockState）
-            Constructor<? extends BlockEntity> constructor = cls.getConstructor(BlockPos.class, BlockState.class);
+    /**
+     * 注册方块和物品（带数据生成器）
+     *
+     * @param id       方块的注册ID，同时作为物品ID
+     * @param function 数据生成器，用于生成方块附加数据。需显式传入{@code (Function)null}表示不使用
+     * @return 包含注册信息的数据容器
+     */
+    public static BaseBlock.Data register(String id, Function<BaseBlock.Data, BaseGeneratedBlockData> function) {
+        return register(id, null, null, function);
+    }
 
-            // 创建 BlockEntitySupplier
-            BlockEntityType.BlockEntitySupplier<BlockEntity> supplier = (pos, state) -> {
-                try {
-                    return constructor.newInstance(pos, state);
-                } catch (Exception e) {
-                    throw new RuntimeException("Failed to create BlockEntity instance", e);
-                }
-            };
+    /**
+     * 注册方块（自定义属性+数据生成器）
+     *
+     * @param id         方块注册ID
+     * @param properties 方块物理属性配置
+     * @param function   数据生成器，需显式传入{@code (Function)null}表示不使用
+     * @return 注册数据容器
+     */
+    public static BaseBlock.Data register(String id, BlockBehaviour.Properties properties, Function<BaseBlock.Data, BaseGeneratedBlockData> function) {
+        return register(id, properties, null, function);
+    }
 
-            // 注册 BlockEntityType
-            RegistryObject<BlockEntityType<?>> blockEntity = BLOCK_ENTITIES.register(blockId, () ->
-                    BlockEntityType.Builder.of(supplier, blockRegistryObject.get())
-                            .build(DSL.remainderType())
-            );
-            BLOCK_ENTITY_DATA_MAP.put(cls, blockEntity);
-            return blockEntity;
-        } catch (NoSuchMethodException e) {
-            throw new IllegalArgumentException("BlockEntity class " + cls.getSimpleName()
-                    + " must have a constructor with (BlockPos, BlockState) parameters", e);
-        }
+    /**
+     * 注册方块（自定义物品栏+数据生成器）
+     *
+     * @param id       方块注册ID
+     * @param tab      创造模式物品栏分类
+     * @param function 数据生成器，需显式传入{@code (Function)null}表示不使用
+     * @return 注册数据容器
+     */
+    public static BaseBlock.Data register(String id, CreativeModeTab tab, Function<BaseBlock.Data, BaseGeneratedBlockData> function) {
+        return register(id, null, tab, function);
+    }
+
+
+    /**
+     * 注册方块和物品
+     *
+     * @param id         方块的 ID，他将和方块物品的ID一致
+     * @param properties 方块属性 默认： BlockBehaviour.Properties.of(Material.STONE).strength(1.5f, 6)
+     * @param tab        物品栏 默认： CreativeModeTab.TAB_BUILDING_BLOCKS
+     * @param function   数据生成器，用于生成适用于当前方块的数据
+     */
+    public static BaseBlock.Data register(String id, BlockBehaviour.Properties properties, CreativeModeTab tab, Function<BaseBlock.Data, BaseGeneratedBlockData> function) {
+        if (id == null) throw new IllegalArgumentException("id cannot be null");
+        if (properties == null) properties = BlockBehaviour.Properties.of(Material.STONE).strength(1.5f, 6f);
+        if (tab == null) tab = CreativeModeTab.TAB_BUILDING_BLOCKS;
+
+        BlockBehaviour.Properties finalProperties = properties;
+        CreativeModeTab finalTab = tab;
+        RegistryObject<Block> blockRegistryObject = BLOCKS.register(id, () -> new BaseBlock(finalProperties));
+        RegistryObject<BlockItem> itemRegistryObject = ITEMS.register(id, () -> new BlockItem(blockRegistryObject.get(), new Item.Properties().tab(finalTab)));
+        BaseBlock.Data data = new BaseBlock.Data(blockRegistryObject, itemRegistryObject, null, null, null).setBlockId(id);
+        if (function != null) data.setGeneratedData(function.apply(data));
+        BLOCK_DATA_LIST.add(data);
+        return data;
+    }
+
+
+    /**
+     * 快速注册方块（使用全部默认配置）
+     * <p>
+     * 默认配置：
+     * - 属性：石材质，硬度1.5，爆炸抗性6
+     * - 物品栏：建筑方块标签
+     * - 数据类：基础方块数据生成器
+     *
+     * @param id 方块/物品的注册ID
+     * @return 包含默认配置的注册数据容器
+     */
+    public static BaseBlock.Data register(String id) {
+        return register(id, null, null, (Class<? extends BaseGeneratedBlockData>) null);
+    }
+
+    /**
+     * 注册方块（自定义属性，其他使用默认）
+     *
+     * @param id         方块/物品的注册ID
+     * @param properties 方块物理属性配置
+     * @return 包含自定义属性的注册数据容器
+     */
+    public static BaseBlock.Data register(String id, BlockBehaviour.Properties properties) {
+        return register(id, properties, null, (Class<? extends BaseGeneratedBlockData>) null);
+    }
+
+    /**
+     * 注册方块（自定义物品栏，其他使用默认）
+     *
+     * @param id  方块/物品的注册ID
+     * @param tab 创造模式物品栏分类
+     * @return 包含自定义物品栏的注册数据容器
+     */
+    public static BaseBlock.Data register(String id, CreativeModeTab tab) {
+        return register(id, null, tab, (Class<? extends BaseGeneratedBlockData>) null);
+    }
+
+    /**
+     * 注册方块（自定义数据生成类，其他使用默认）
+     *
+     * @param id       方块/物品的注册ID
+     * @param dataClas 自定义数据生成类类型
+     * @return 包含自定义数据生成器的注册数据容器
+     */
+    public static BaseBlock.Data register(String id, Class<? extends BaseGeneratedBlockData> dataClas) {
+        return register(id, null, null, dataClas);
+    }
+
+    /**
+     * 注册方块（自定义属性+物品栏）
+     *
+     * @param id         方块/物品的注册ID
+     * @param properties 方块物理属性配置
+     * @param tab        创造模式物品栏分类
+     * @return 包含自定义属性和物品栏的注册数据容器
+     */
+    public static BaseBlock.Data register(String id, BlockBehaviour.Properties properties, CreativeModeTab tab) {
+        return register(id, properties, tab, (Class<? extends BaseGeneratedBlockData>) null);
+    }
+
+    /**
+     * 注册方块（自定义属性+数据生成类）
+     *
+     * @param id         方块/物品的注册ID
+     * @param properties 方块物理属性配置
+     * @param dataClas   自定义数据生成类类型
+     * @return 包含自定义属性和数据生成器的注册数据容器
+     */
+    public static BaseBlock.Data register(String id, BlockBehaviour.Properties properties, Class<? extends BaseGeneratedBlockData> dataClas) {
+        return register(id, properties, null, dataClas);
+    }
+
+    /**
+     * 注册方块（自定义物品栏+数据生成类）
+     *
+     * @param id       方块/物品的注册ID
+     * @param tab      创造模式物品栏分类
+     * @param dataClas 自定义数据生成类类型
+     * @return 包含自定义物品栏和数据生成器的注册数据容器
+     */
+    public static BaseBlock.Data register(String id, CreativeModeTab tab, Class<? extends BaseGeneratedBlockData> dataClas) {
+        return register(id, null, tab, dataClas);
     }
 
     /**
@@ -154,7 +271,7 @@ public class BlockRegterTables {
         CreativeModeTab finalTab = tab;
         RegistryObject<Block> blockRegistryObject = BLOCKS.register(id, () -> new BaseBlock(finalProperties));
         RegistryObject<BlockItem> itemRegistryObject = ITEMS.register(id, () -> new BlockItem(blockRegistryObject.get(), new Item.Properties().tab(finalTab)));
-        BaseBlock.Data data = new BaseBlock.Data(blockRegistryObject, itemRegistryObject, null, null, null).getGeneratedData(dataClas).setBlockId(id);
+        BaseBlock.Data data = new BaseBlock.Data(blockRegistryObject, itemRegistryObject, null, null, null).setGeneratedDataClass(dataClas).setBlockId(id);
         BLOCK_DATA_LIST.add(data);
         return data;
     }
@@ -202,29 +319,40 @@ public class BlockRegterTables {
         }
     }
 
-    private static @NotNull Supplier<BlockItem> getBlockItemSupplier(
-            Class<? extends Block> clazz,
-            RegistryObject<Block> blockRegistryObject
-    ) {
+    private static RegistryObject<BlockEntityType<?>> registerBlockEntity(Class<? extends BlockEntity> cls, RegistryObject<Block> blockRegistryObject, String blockId) {
+        // 通过反射获取构造函数
+        try {
+            // 获取构造函数（参数类型：BlockPos, BlockState）
+            Constructor<? extends BlockEntity> constructor = cls.getConstructor(BlockPos.class, BlockState.class);
+
+            // 创建 BlockEntitySupplier
+            BlockEntityType.BlockEntitySupplier<BlockEntity> supplier = (pos, state) -> {
+                try {
+                    return constructor.newInstance(pos, state);
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to create BlockEntity instance", e);
+                }
+            };
+
+            // 注册 BlockEntityType
+            RegistryObject<BlockEntityType<?>> blockEntity = BLOCK_ENTITIES.register(blockId, () -> BlockEntityType.Builder.of(supplier, blockRegistryObject.get()).build(DSL.remainderType()));
+            BLOCK_ENTITY_DATA_MAP.put(cls, blockEntity);
+            return blockEntity;
+        } catch (NoSuchMethodException e) {
+            throw new IllegalArgumentException("BlockEntity class " + cls.getSimpleName() + " must have a constructor with (BlockPos, BlockState) parameters", e);
+        }
+    }
+
+
+    private static @NotNull Supplier<BlockItem> getBlockItemSupplier(Class<? extends Block> clazz, RegistryObject<Block> blockRegistryObject) {
         // 预扫描反射信息
-        final Method method = Stream.of(clazz.getDeclaredMethods())
-                .filter(m -> {
-                    int paramCount = m.getParameterCount();
-                    return BlockItem.class.equals(m.getReturnType())
-                            && paramCount <= 1
-                            && (paramCount == 0 || Block.class.isAssignableFrom(m.getParameterTypes()[0]));
-                })
-                .min(Comparator.comparingInt(m -> Modifier.isStatic(m.getModifiers()) ? 0 : 1))
-                .orElse(Stream.of(clazz.getMethods())
-                        .filter(m -> {
-                            int paramCount = m.getParameterCount();
-                            return BlockItem.class.equals(m.getReturnType())
-                                    && paramCount <= 1
-                                    && (paramCount == 0 || Block.class.isAssignableFrom(m.getParameterTypes()[0]));
-                        })
-                        .min(Comparator.comparingInt(m -> Modifier.isStatic(m.getModifiers()) ? 0 : 1))
-                        .orElseThrow(() -> new IllegalArgumentException("Class " + clazz.getName() + " must have a static factory method " + "returning BlockItem with: 0 parameters or 1 Block-type parameter"))
-                );
+        final Method method = Stream.of(clazz.getDeclaredMethods()).filter(m -> {
+            int paramCount = m.getParameterCount();
+            return BlockItem.class.equals(m.getReturnType()) && paramCount <= 1 && (paramCount == 0 || Block.class.isAssignableFrom(m.getParameterTypes()[0]));
+        }).min(Comparator.comparingInt(m -> Modifier.isStatic(m.getModifiers()) ? 0 : 1)).orElse(Stream.of(clazz.getMethods()).filter(m -> {
+            int paramCount = m.getParameterCount();
+            return BlockItem.class.equals(m.getReturnType()) && paramCount <= 1 && (paramCount == 0 || Block.class.isAssignableFrom(m.getParameterTypes()[0]));
+        }).min(Comparator.comparingInt(m -> Modifier.isStatic(m.getModifiers()) ? 0 : 1)).orElseThrow(() -> new IllegalArgumentException("Class " + clazz.getName() + " must have a static factory method " + "returning BlockItem with: 0 parameters or 1 Block-type parameter")));
 
         final boolean isStatic = Modifier.isStatic(method.getModifiers());
         final int paramCount = method.getParameterCount();
@@ -238,9 +366,7 @@ public class BlockRegterTables {
 
             try {
                 final Object[] args = paramCount > 0 ? new Object[]{instance} : null;
-                return isStatic
-                        ? (BlockItem) method.invoke(null, args)
-                        : (BlockItem) method.invoke(instance, args);
+                return isStatic ? (BlockItem) method.invoke(null, args) : (BlockItem) method.invoke(instance, args);
             } catch (IllegalAccessException e) {
                 throw new IllegalStateException("Access failed for method: " + method, e);
             } catch (InvocationTargetException e) {

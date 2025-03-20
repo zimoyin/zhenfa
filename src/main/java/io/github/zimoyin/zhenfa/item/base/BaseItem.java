@@ -66,7 +66,8 @@ public class BaseItem extends Item {
         }
 
         public String getItemId() {
-            if (annotation != null && annotation.value() != null && !annotation.value().isEmpty()) return annotation.value();
+            if (annotation != null && annotation.value() != null && !annotation.value().isEmpty())
+                return annotation.value();
             if (cls != null) return cls.getSimpleName().toLowerCase();
             return Objects.requireNonNullElseGet(itemId, () -> itemRegistryObject.get().getRegistryName().getPath());
         }
@@ -92,7 +93,7 @@ public class BaseItem extends Item {
         }
 
 
-        public Data setData(Class<? extends BaseGeneratedItemData> dataClass) {
+        public Data setGeneratedDataClass(Class<? extends BaseGeneratedItemData> dataClass) {
             if (dataClass == null) return this;
             try {
                 if (data == null) {
@@ -106,6 +107,11 @@ public class BaseItem extends Item {
                 data = new BaseGeneratedItemData(this);
                 LOGGER.error("\n!!!!! ERROR !!!!!!\nFailed to create generated data for block {}\n@See: Please set it as public static\n", annotation.generatedData(), e);
             }
+            return this;
+        }
+
+        public Data setGeneratedData(BaseGeneratedItemData data) {
+            if (annotation == null && data != null && this.data != null) this.data = data;
             return this;
         }
 

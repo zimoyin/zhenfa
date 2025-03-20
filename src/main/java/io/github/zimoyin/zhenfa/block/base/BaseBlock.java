@@ -195,7 +195,7 @@ public class BaseBlock extends Block {
             return data;
         }
 
-        public Data getGeneratedData(Class<? extends BaseGeneratedBlockData> dataClas) {
+        public Data setGeneratedDataClass(Class<? extends BaseGeneratedBlockData> dataClas) {
             if (dataClas == null) return this;
             try {
                 if (data == null) {
@@ -205,6 +205,11 @@ public class BaseBlock extends Block {
                 data = new BaseGeneratedBlockData(this);
                 LOGGER.error("\n!!!!! ERROR !!!!!!\nFailed to create generated data for block {}\n@See: Please set it as public static\n", annotation.generatedData(), e);
             }
+            return this;
+        }
+
+        public Data setGeneratedData(BaseGeneratedBlockData apply) {
+            if (annotation == null && apply != null && data != null) this.data = apply;
             return this;
         }
 

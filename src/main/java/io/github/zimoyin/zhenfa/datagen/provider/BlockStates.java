@@ -27,7 +27,11 @@ public class BlockStates extends BlockStateProvider {
                try {
                    data.getGeneratedData().registerStatesAndModel(this);
                }catch (Exception e){
-                   LOGGER.error("Failed registerStatesAndModels: {}",e.getMessage(),e);
+                   if (e.getMessage().contains("does not exist in any known resource pack")){
+                       LOGGER.error("Failed registerStatesAndModels: {}",e.getMessage());
+                   }else {
+                       LOGGER.error("Failed registerStatesAndModels: {}",e.getMessage(),e);
+                   }
                }
            }
         }

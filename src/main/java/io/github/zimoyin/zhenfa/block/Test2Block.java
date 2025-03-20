@@ -30,7 +30,7 @@ import java.util.Optional;
  * @author : zimo
  * @date : 2025/03/16
  */
-@BlockRegterTables.RegisterBlock(value = "test2", blockEntity = Test2Block.Test2BlockEntity.class)
+@BlockRegterTables.RegisterBlock(value = "ctestblock2", blockEntity = Test2Block.Test2BlockEntity.class)
 public class Test2Block extends BaseEntityBlock {
 
     public Test2Block() {
