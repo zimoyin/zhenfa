@@ -4,6 +4,7 @@ import com.google.common.base.Supplier;
 import com.mojang.datafixers.DSL;
 import com.mojang.logging.LogUtils;
 import io.github.zimoyin.zhenfa.utils.ScanResultUtils;
+import io.github.zimoyin.zhenfa.utils.ext.ClassUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
@@ -24,10 +25,7 @@ import org.slf4j.Logger;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -390,17 +388,7 @@ public class BlockRegterTables {
     private static RegistryObject<BlockEntityType<?>> registerBlockEntity(Class<? extends BlockEntity> cls, RegistryObject<Block> blockRegistryObject, String blockId) {
         // 通过反射获取构造函数
         try {
-            // 获取构造函数（参数类型：BlockPos, BlockState）
-            Constructor<? extends BlockEntity> constructor = cls.getConstructor(BlockPos.class, BlockState.class);
-
-            // 创建 BlockEntitySupplier
-            BlockEntityType.BlockEntitySupplier<BlockEntity> supplier = (pos, state) -> {
-                try {
-                    return constructor.newInstance(pos, state);
-                } catch (Exception e) {
-                    throw new RuntimeException("Failed to create BlockEntity instance", e);
-                }
-            };
+            BlockEntityType.BlockEntitySupplier<BlockEntity> supplier = getBlockEntitySupplier(cls);
 
             // 注册 BlockEntityType
             RegistryObject<BlockEntityType<?>> blockEntity = BLOCK_ENTITIES.register(blockId, () -> BlockEntityType.Builder.of(supplier, blockRegistryObject.get()).build(DSL.remainderType()));
@@ -408,6 +396,77 @@ public class BlockRegterTables {
             return blockEntity;
         } catch (NoSuchMethodException e) {
             throw new IllegalArgumentException("BlockEntity class " + cls.getSimpleName() + " must have a constructor with (BlockPos, BlockState) parameters", e);
+        }
+    }
+
+    /**
+     * 获取BlockEntitySupplier <br>
+     * 最先通过反射获取最需要的 Constructor(BlockPos.class, BlockState.class) <br>
+     * 如果没有或者获取失败则调用 Constructor(BlockEntityType.class, BlockPos.class, BlockState.class)<br>
+     * 对于 BlockEntityType.class 这个参数将会从 BLOCK_ENTITY_DATA_MAP 中获取
+     *
+     * @param cls
+     * @return
+     * @throws NoSuchMethodException
+     */
+    @NotNull
+    private static BlockEntityType.BlockEntitySupplier<BlockEntity> getBlockEntitySupplier(Class<? extends BlockEntity> cls) throws NoSuchMethodException {
+        // 优先尝试获取主构造函数(BlockPos, BlockState)
+        Constructor<? extends BlockEntity> primaryConstructor = getConstructorQuietly(cls, BlockPos.class, BlockState.class);
+
+        if (primaryConstructor != null) {
+            return (pos, state) -> instantiateBlockEntity(cls, primaryConstructor, pos, state);
+        } else {
+            // 主构造函数不可用时，尝试备用构造函数(BlockEntityType, BlockPos, BlockState)
+            Constructor<?> fallbackConstructor = ClassUtils.findConstructor(cls, BlockEntityType.class, BlockPos.class, BlockState.class);
+            if (fallbackConstructor == null) {
+                throw new RuntimeException("No suitable constructor found for class " + cls.getName());
+            }
+            return (pos, state) -> {
+                try {
+                    return (BlockEntity) fallbackConstructor.newInstance(BaseBlockEntity.getEntityType(cls), pos, state);
+                } catch (Exception ex) {
+                    LOGGER.error("Failed to create BlockEntity instance using fallback constructor for class {}", cls.getName(), ex);
+                    throw new RuntimeException("Failed to create BlockEntity instance", ex);
+                }
+            };
+        }
+    }
+
+    /**
+     * 尝试获取构造函数，遇到异常时记录调试日志并返回null。
+     */
+    private static <T> Constructor<? extends T> getConstructorQuietly(Class<? extends T> cls, Class<?>... parameterTypes) {
+        try {
+            return cls.getConstructor(parameterTypes);
+        } catch (Exception e) {
+            LOGGER.debug("Constructor {} not found for class {}. Exception: {}", Arrays.toString(parameterTypes), cls.getName(), e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 使用给定构造函数实例化BlockEntity，如果遇到特定异常则尝试备用构造函数。
+     */
+    private static BlockEntity instantiateBlockEntity(Class<? extends BlockEntity> cls, Constructor<? extends BlockEntity> constructor, BlockPos pos, BlockState state) {
+        try {
+            return constructor.newInstance(pos, state);
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("Failed to create entity type; Entity type is null")) {
+                LOGGER.debug("Primary constructor failed for class {} due to null entity type. Attempting fallback constructor.", cls.getName(), e);
+                try {
+                    Constructor<? extends BlockEntity> fallback = cls.getConstructor(BlockEntityType.class, BlockPos.class, BlockState.class);
+                    return fallback.newInstance(BaseBlockEntity.getEntityType(cls), pos, state);
+                } catch (Exception fallbackEx) {
+                    LOGGER.error("Failed to instantiate BlockEntity using fallback constructor for class {}", cls.getName(), fallbackEx);
+                    throw new RuntimeException("Failed to create BlockEntity instance", fallbackEx);
+                }
+            } else {
+                throw new RuntimeException("Failed to create BlockEntity instance", e);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error instantiating BlockEntity for class {}", cls.getName(), e);
+            throw new RuntimeException("Failed to create BlockEntity instance", e);
         }
     }
 
@@ -482,7 +541,7 @@ public class BlockRegterTables {
         /**
          * 方块实体类
          */
-        Class<? extends BlockEntity> blockEntity() default BlockEntity.class;
+        Class<? extends BlockEntity> blockEntity() default BaseBlockEntity.class;
 
         /**
          * 是否注入Data 他是 Data(RegistryObject<Block> blockObj, RegistryObject<Item> itemObj)

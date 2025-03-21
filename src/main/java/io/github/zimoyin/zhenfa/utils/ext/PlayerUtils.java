@@ -1,4 +1,4 @@
-package io.github.zimoyin.zhenfa.utils;
+package io.github.zimoyin.zhenfa.utils.ext;
 
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.entity.player.Player;

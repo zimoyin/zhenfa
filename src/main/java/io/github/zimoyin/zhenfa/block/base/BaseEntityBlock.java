@@ -1,6 +1,7 @@
 package io.github.zimoyin.zhenfa.block.base;
 
 import com.mojang.logging.LogUtils;
+import io.github.zimoyin.zhenfa.utils.ext.ClassUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -31,7 +32,7 @@ public abstract class BaseEntityBlock extends net.minecraft.world.level.block.Ba
 
 
     public BaseEntityBlock(Material material) {
-        super(BlockBehaviour.Properties.of(material).strength(1.5F, 6.0F));
+        super(Properties.of(material).strength(1.5F, 6.0F));
     }
 
     public BaseEntityBlock(Properties properties) {
@@ -52,6 +53,38 @@ public abstract class BaseEntityBlock extends net.minecraft.world.level.block.Ba
     private static final Logger LOGGER = LogUtils.getLogger();
 
 
+    private Class<? extends BlockEntity> getEntityClazz() {
+        if (entityClazz == null) {
+            BlockRegterTables.RegisterBlock annotation = this.getClass().getAnnotation(BlockRegterTables.RegisterBlock.class);
+            if (annotation == null) {
+                LOGGER.error("The Class {} Not Found @{}", this.getClass().getName(), BlockRegterTables.RegisterBlock.class.getSimpleName());
+                return entityClazz;
+            }
+            entityClazz = annotation.blockEntity();
+            if (entityClazz == BlockEntity.class) {
+                LOGGER.error("The @{} Not Found blockEntity field", BlockRegterTables.RegisterBlock.class.getSimpleName());
+                entityClazz = BaseBlockEntity.class;
+            }
+        }
+        return entityClazz;
+    }
+
+    private Method getClientTickMethod() throws NoSuchMethodException {
+        if (clientTickMethod == null) {
+            clientTickMethod = getEntityClazz().getMethod("clientTick", Level.class, BlockPos.class, BlockState.class, BlockEntity.class);
+            clientTickMethod.setAccessible(true);
+        }
+        return clientTickMethod;
+    }
+
+    private Method getServerTickMethod() throws NoSuchMethodException {
+        if (serverTickMethod == null) {
+            serverTickMethod = getEntityClazz().getMethod("serverTick", Level.class, BlockPos.class, BlockState.class, BlockEntity.class);
+            serverTickMethod.setAccessible(true);
+        }
+        return serverTickMethod;
+    }
+
     /**
      * 设置方块物品。重写该方法可以修改方块物品的属性
      */
@@ -67,7 +100,7 @@ public abstract class BaseEntityBlock extends net.minecraft.world.level.block.Ba
     /**
      * 设置方块名称。设置后运行 gradle:runData 后生成 en_us lang 文件。如果设置了 BaseGeneratedBlockData 则不生效
      *
-     * @see io.github.zimoyin.zhenfa.block.base.BaseGeneratedBlockData#lang
+     * @see BaseGeneratedBlockData#lang
      * @deprecated 请使用国际化的语言文件对其进行修改。或者请看能自动生成 json 的工具
      */
     @Deprecated
@@ -151,26 +184,21 @@ public abstract class BaseEntityBlock extends net.minecraft.world.level.block.Ba
         return RenderShape.MODEL;
     }
 
-    private void updateEntityClazz() {
-        if (entityClazz == null) {
-            BlockRegterTables.RegisterBlock annotation = this.getClass().getAnnotation(BlockRegterTables.RegisterBlock.class);
-            if (annotation == null) throw new RuntimeException("BlockEntity must be annotated with @RegisterBlock");
-            entityClazz = annotation.blockEntity();
-            if (entityClazz == BlockEntity.class) throw new RuntimeException("@RegisterBlock must be set blockEntity");
-        }
-    }
-
     @Override
     public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) {
-        updateEntityClazz();
+        BlockEntity blockEntity = null;
         try {
-            // 获取构造函数（参数类型：BlockPos, BlockState）
-            Constructor<? extends BlockEntity> constructor = entityClazz.getConstructor(BlockPos.class, BlockState.class);
-            return constructor.newInstance(pos, state);
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
-                 NoSuchMethodException e) {
-            throw new RuntimeException(e);
+            Constructor<? extends BlockEntity> constructor = getEntityClazz().getConstructor(BlockPos.class, BlockState.class);
+            blockEntity = constructor.newInstance(pos, state);
+        } catch (Exception e) {
+            try {
+                Constructor<?> constructor = ClassUtils.findConstructor(getEntityClazz(), BlockEntityType.class, BlockPos.class, BlockState.class);
+                blockEntity = (BlockEntity) constructor.newInstance(BaseBlockEntity.getEntityType(getEntityClazz()), pos, state);
+            } catch (Exception ex) {
+                LOGGER.error("Failed to create BlockEntity; Class {}", getEntityClazz().getName(), ex);
+            }
         }
+        return blockEntity;
     }
 
     /**
@@ -182,9 +210,8 @@ public abstract class BaseEntityBlock extends net.minecraft.world.level.block.Ba
      */
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level pLevel, @NotNull BlockState pState, @NotNull BlockEntityType<T> pBlockEntityType) {
-        updateEntityClazz();
-        if (entityClazz == null) return super.getTicker(pLevel, pState, pBlockEntityType);
-        BlockEntityType<?> entityType = BaseBlockEntity.getEntityType(entityClazz);
+        if (getEntityClazz() == null) return super.getTicker(pLevel, pState, pBlockEntityType);
+        BlockEntityType<?> entityType = BaseBlockEntity.getEntityType(getEntityClazz());
         return BaseEntityBlock.createTickerHelper(pBlockEntityType, entityType, pLevel.isClientSide ? this::clientTick : this::serverTick);
     }
 
@@ -194,15 +221,11 @@ public abstract class BaseEntityBlock extends net.minecraft.world.level.block.Ba
     public void clientTick(Level level, BlockPos pos, BlockState state, BlockEntity o) {
         // 执行类实体中的 clientTick 方法
         try {
-            if (clientTickMethod == null) {
-                clientTickMethod = entityClazz.getMethod("clientTick", Level.class, BlockPos.class, BlockState.class, BlockEntity.class);
-                clientTickMethod.setAccessible(true);
-            }
-            BlockEntity entity = BaseBlockEntity.getEntityType(entityClazz).getBlockEntity(level, pos);
-            if (entity != null) clientTickMethod.invoke(entity, level, pos, state, o);
-            else LOGGER.warn("BaseBlockEntity serverTick method entity is null in {}", entityClazz.getName());
+            BlockEntity entity = BaseBlockEntity.getEntityType(getEntityClazz()).getBlockEntity(level, pos);
+            if (entity != null) getClientTickMethod().invoke(entity, level, pos, state, o);
+            else LOGGER.warn("BaseBlockEntity serverTick method entity is null in {}", getEntityClazz().getName());
         } catch (Exception e) {
-            LOGGER.error("BaseBlockEntity clientTick method exception in {}", entityClazz.getName(), e);
+            LOGGER.error("BaseBlockEntity clientTick method exception in {}", getEntityClazz().getName(), e);
         }
     }
 
@@ -212,15 +235,11 @@ public abstract class BaseEntityBlock extends net.minecraft.world.level.block.Ba
     public void serverTick(Level level, BlockPos pos, BlockState state, BlockEntity e) {
         // 执行类实体中的 serverTick 方法
         try {
-            if (serverTickMethod == null) {
-                serverTickMethod = entityClazz.getMethod("serverTick", Level.class, BlockPos.class, BlockState.class, BlockEntity.class);
-                serverTickMethod.setAccessible(true);
-            }
-            BlockEntity entity = BaseBlockEntity.getEntityType(entityClazz).getBlockEntity(level, pos);
-            if (entity != null) serverTickMethod.invoke(entity, level, pos, state, e);
-            else LOGGER.warn("BaseBlockEntity serverTick method entity is null in {}", entityClazz.getName());
+            BlockEntity entity = BaseBlockEntity.getEntityType(getEntityClazz()).getBlockEntity(level, pos);
+            if (entity != null) getServerTickMethod().invoke(entity, level, pos, state, e);
+            else LOGGER.warn("BaseBlockEntity serverTick method entity is null in {}", getEntityClazz().getName());
         } catch (Exception ex) {
-            LOGGER.error("BaseBlockEntity serverTick method exception in {}", entityClazz.getName(), ex);
+            LOGGER.error("BaseBlockEntity serverTick method exception in {}", getEntityClazz().getName(), ex);
         }
     }
 }

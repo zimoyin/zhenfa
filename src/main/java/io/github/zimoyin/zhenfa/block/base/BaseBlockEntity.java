@@ -19,15 +19,25 @@ import java.util.Optional;
  * @author : zimo
  * &#064;date : 2025/03/18
  */
-public abstract class BaseBlockEntity extends BlockEntity {
+public class BaseBlockEntity extends BlockEntity {
+
     public BaseBlockEntity(BlockEntityType<? extends BlockEntity> type, BlockPos worldPosition, BlockState blockState) {
-        super(type, worldPosition, blockState);
+        super(checkEntityType(type), worldPosition, blockState);
     }
 
+    /**
+     * 每一个继承的类, 必须要重写这个构造方法，必须调用 super(getEntityType(当前类.class), worldPosition, blockState)
+     * 如果你不重写该构造那么框架会自行搜索，但是搜索时机无法确定，可能会导致null
+     */
     public BaseBlockEntity(BlockPos worldPosition, BlockState blockState) {
-        super(null, worldPosition, blockState);
+        super(checkEntityType(null), worldPosition, blockState);
     }
 
+
+    private static BlockEntityType<? extends BlockEntity> checkEntityType(BlockEntityType<? extends BlockEntity> type) {
+        if (type != null) return type;
+        throw new IllegalArgumentException("Failed to create entity type; Entity type is null");
+    }
 
     /**
      * 每 tick 都会调用，仅在客户端上执行
