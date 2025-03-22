@@ -24,6 +24,7 @@ import javax.annotation.Nonnull;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Optional;
 
 /**
  * 实体方块基础类，该类描述一个确实存在的方块
@@ -171,6 +172,17 @@ public abstract class BaseEntityBlock extends net.minecraft.world.level.block.Ba
             return super.defaultDestroyTime();
         }
         return super.defaultDestroyTime() / 1.25f;
+    }
+
+
+    /**
+     * 获取方块实体
+     */
+    public <T> Optional<T> getBlockEntity(Class<T> clazz, Level level, BlockPos pos) {
+        BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (blockEntity == null) return Optional.empty();
+        if (clazz.isInstance(blockEntity)) return Optional.of(clazz.cast(blockEntity));
+        return Optional.empty();
     }
 
     /// ///////////////////////////////////////
