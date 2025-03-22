@@ -10,6 +10,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -367,6 +368,7 @@ public class BlockRegterTables {
         RegistryObject<Block> blockRegistryObject = BLOCKS.register(blockId, createFactory(cls));
         RegistryObject<BlockItem> itemRegistryObject = ITEMS.register(itemId, getBlockItemSupplier(cls, blockRegistryObject));
         if (BlockEntity.class.isAssignableFrom(blockEntity) && blockEntity != BlockEntity.class) {
+            if (!BaseEntityBlock.class.isAssignableFrom(cls)) throw new IllegalArgumentException(cls+" must be a subclass of EntityBlock");
             registryBlockEntityType = registerBlockEntity(blockEntity, blockRegistryObject, blockId);
         }
         BaseBlock.Data data = new BaseBlock.Data(blockRegistryObject, itemRegistryObject, registryBlockEntityType, cls, annotation);
