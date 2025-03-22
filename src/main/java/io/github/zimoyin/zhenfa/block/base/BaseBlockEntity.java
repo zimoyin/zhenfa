@@ -11,6 +11,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
@@ -101,6 +102,7 @@ public class BaseBlockEntity extends BlockEntity {
     /**
      * 从 NBT 加载数据时触发（服务端加载存档/客户端接收网络包）。
      * 此时 {@link #level} 可能未初始化，因此通过 {@link #isNeedSynchronizeFlag} 标记延迟同步。
+     * 如果不想在本类中进行同步，重写 needSynchronizeTick 后即可对此产生影响
      */
     @Override
     public void load(CompoundTag pTag) {
@@ -117,6 +119,15 @@ public class BaseBlockEntity extends BlockEntity {
      */
     public static BlockEntityType<?> getEntityType(Class<? extends BlockEntity> cls) {
         return BlockRegterTables.getEntityRegistryObject(cls).get();
+    }
+
+    /**
+     * 持久化时触发（服务端存档/客户端发送网络包）。
+     */
+    @Override
+    @NotNull
+    public CompoundTag getUpdateTag() {
+        return super.getUpdateTag();
     }
 
     /**
