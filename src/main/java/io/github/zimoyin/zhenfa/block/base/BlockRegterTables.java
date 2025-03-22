@@ -368,7 +368,7 @@ public class BlockRegterTables {
         RegistryObject<Block> blockRegistryObject = BLOCKS.register(blockId, createFactory(cls));
         RegistryObject<BlockItem> itemRegistryObject = ITEMS.register(itemId, getBlockItemSupplier(cls, blockRegistryObject));
         if (BlockEntity.class.isAssignableFrom(blockEntity) && blockEntity != BlockEntity.class) {
-            if (!BaseEntityBlock.class.isAssignableFrom(cls)) throw new IllegalArgumentException(cls+" must be a subclass of EntityBlock");
+            if (!BaseEntityBlock.class.isAssignableFrom(cls)) throw new IllegalArgumentException(cls+" must be a subclass of BaseEntityBlock");
             registryBlockEntityType = registerBlockEntity(blockEntity, blockRegistryObject, blockId);
         }
         BaseBlock.Data data = new BaseBlock.Data(blockRegistryObject, itemRegistryObject, registryBlockEntityType, cls, annotation);
