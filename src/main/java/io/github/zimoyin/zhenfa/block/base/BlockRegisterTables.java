@@ -366,10 +366,20 @@ public class BlockRegisterTables {
         RegistryObject<BlockEntityType<?>> registryBlockEntityType = null;
         RegistryObject<Block> blockRegistryObject = BLOCKS.register(blockId, createFactory(cls));
         RegistryObject<BlockItem> itemRegistryObject = ITEMS.register(itemId, getBlockItemSupplier(cls, blockRegistryObject));
-        if (BlockEntity.class.isAssignableFrom(blockEntity) && blockEntity != BlockEntity.class) {
-            if (!EntityBlock.class.isAssignableFrom(cls)) throw new IllegalArgumentException(cls+" must implements EntityBlock");
+        if (blockEntity != BlockEntity.class) {
+            if (!EntityBlock.class.isAssignableFrom(cls)) {
+                IllegalArgumentException exception = new IllegalArgumentException(cls + " must implements (IBaseEntityBlock or EntityBlock) Or extends BaseEntityBlock");
+                LOGGER.warn("You must declare that your {} class is an ElementBlock class, otherwise even if you specify BlockEntity for your class, it will not take effect. If you do not know how to do so, please check the ERROR log below", cls.getName());
+                LOGGER.error(exception.getMessage(), exception);
+            }
             registryBlockEntityType = registerBlockEntity(blockEntity, blockRegistryObject, blockId);
+        } else {
+            if (EntityBlock.class.isAssignableFrom(cls)) {
+                LOGGER.warn("Class {} has no annotation field @RegisterBlock: blockEntity", cls.getName());
+                LOGGER.warn("If you do not want to implement BlockEntity for the time being, please use @ RegisterBlock: The value of blockEntity is specified as {}.class", BaseBlockEntity.class.getSimpleName());
+            }
         }
+
 
         BaseBlock.Data data = new BaseBlock.Data(blockRegistryObject, itemRegistryObject, registryBlockEntityType, cls, annotation);
         setData(data);
@@ -481,7 +491,12 @@ public class BlockRegisterTables {
         }).min(Comparator.comparingInt(m -> Modifier.isStatic(m.getModifiers()) ? 0 : 1)).orElse(Stream.of(clazz.getMethods()).filter(m -> {
             int paramCount = m.getParameterCount();
             return BlockItem.class.equals(m.getReturnType()) && paramCount <= 1 && (paramCount == 0 || Block.class.isAssignableFrom(m.getParameterTypes()[0]));
-        }).min(Comparator.comparingInt(m -> Modifier.isStatic(m.getModifiers()) ? 0 : 1)).orElseThrow(() -> new IllegalArgumentException("Class " + clazz.getName() + " must have a [static] method " + "returning BlockItem with: 0 parameters or 1 Block-type parameter")));
+        }).min(Comparator.comparingInt(m -> Modifier.isStatic(m.getModifiers()) ? 0 : 1)).orElse(null));
+
+        if (method == null) {
+            LOGGER.warn("Class {} must have a [static] method returning BlockItem with: 0 parameters or 1 Block-type parameter", clazz.getName());
+            return () -> new BlockItem(blockRegistryObject.get(), new Item.Properties());
+        }
 
         final boolean isStatic = Modifier.isStatic(method.getModifiers());
         final int paramCount = method.getParameterCount();
@@ -543,7 +558,7 @@ public class BlockRegisterTables {
         /**
          * 方块实体类
          */
-        Class<? extends BlockEntity> blockEntity() default BaseBlockEntity.class;
+        Class<? extends BlockEntity> blockEntity() default BlockEntity.class;
 
         /**
          * 是否注入Data 他是 Data(RegistryObject<Block> blockObj, RegistryObject<Item> itemObj)
