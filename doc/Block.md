@@ -293,6 +293,21 @@ public class TestBlock extends BaseEntityBlock {
 }
 ```
 
+### 另外一种方块实体写法
+如果不想继承 BaseBlockEntity，也可以实现 IBaseBlockEntity 接口，同时继承 Block 或者 Block 的一个子类即可   
+例如：  
+```java
+@BlockRegterTables.RegisterBlock(value = "boundary",
+        data = true,
+        blockEntity = BoundaryBlock.BoundaryBlockEntity.class,
+        generatedData = BoundaryBlock.BoundaryBlockGenerator.class
+)
+public class BoundaryBlock extends SlabBlock implements IBaseEntityBlock{
+    // .....
+}
+```
+另外关于半砖，你可以继承 SlabBlock 也可以重写 isSlabBlock() 方法返回 true，使用 isSlabBlock() 方法仅仅支持最简单的方式
+
 ### 自动生成JSON
 在1.12 版本中，方块物品等模型都需要手动写Json 来实现。但是在 1.18 中有 capability 来进行代码自动化的生成。  
 自动化生成需要调用 gradle 命令 `./gradlew runData`。但是这不意味着所有的一切都会被生成，需要手动在代码中进行设置一部分内容。  
