@@ -121,3 +121,4 @@ runs/
 /src/generated/resources/.cache/
 /src/generated/resources/assets/
 /src/generated/resources/data/
+/logs/

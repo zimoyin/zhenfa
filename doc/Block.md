@@ -419,7 +419,7 @@ public class Test4Blocks {
 
 ## 我想手动创建不想使用框架提供的自动化
 参考:
-* io.github.zimoyin.zhenfa.block.base.BlockRegterTables.BLOCKS
-* io.github.zimoyin.zhenfa.block.base.BlockRegterTables.BLOCK_ENTITIES
+* io.github.zimoyin.zhenfa.block.base.BlockRegisterTables.BLOCKS
+* io.github.zimoyin.zhenfa.block.base.BlockRegisterTables.BLOCK_ENTITIES
 * io.github.zimoyin.zhenfa.item.base.ItemRegterTables.ITEMS
 另外你可能需要在 autoRegisterAll 执行前完成注册

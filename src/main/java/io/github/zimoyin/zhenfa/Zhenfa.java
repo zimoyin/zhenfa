@@ -1,9 +1,8 @@
 package io.github.zimoyin.zhenfa;
 
 import com.mojang.logging.LogUtils;
-import io.github.zimoyin.zhenfa.block.base.BlockRegterTables;
+import io.github.zimoyin.zhenfa.block.base.BlockRegisterTables;
 import io.github.zimoyin.zhenfa.item.base.ItemRegterTables;
-import io.github.zimoyin.zhenfa.utils.ScanResultUtils;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
@@ -15,7 +14,6 @@ import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.forgespi.language.ModFileScanData;
 import org.slf4j.Logger;
 import java.util.stream.Collectors;
 
@@ -39,7 +37,7 @@ public class Zhenfa {
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
 
-        BlockRegterTables.autoRegisterAll(FMLJavaModLoadingContext.get());
+        BlockRegisterTables.autoRegisterAll(FMLJavaModLoadingContext.get());
         ItemRegterTables.autoRegisterAll(FMLJavaModLoadingContext.get());
     }
 
