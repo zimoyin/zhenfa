@@ -9,11 +9,20 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.registries.RegistryObject;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import java.util.Objects;
+
+import static net.minecraft.world.level.block.SculkSensorBlock.WATERLOGGED;
+import static net.minecraft.world.level.block.SlabBlock.TYPE;
 
 /**
  * 这是一个基础方块类，继承本类后，在子类上创建一个@RegisterBlock注解，即可自动注册方块和方块物品。<br/>
@@ -23,23 +32,49 @@ import java.util.Objects;
  * &#064;date  : 2025/03/16
  * @see BaseGeneratedBlockData
  */
-public class BaseBlock extends Block {
+public class BaseBlock extends Block implements IBaseBlock {
 
     public BaseBlock(Material material) {
         super(BlockBehaviour.Properties.of(material).strength(1.5F, 6.0F));
+        if (isSlabBlock())
+            this.registerDefaultState(this.defaultBlockState().setValue(TYPE, SlabType.BOTTOM).setValue(WATERLOGGED, Boolean.FALSE));
     }
 
     public BaseBlock(Properties properties) {
         super(properties);
+        if (isSlabBlock())
+            this.registerDefaultState(this.defaultBlockState().setValue(TYPE, SlabType.BOTTOM).setValue(WATERLOGGED, Boolean.FALSE));
     }
 
-    @Deprecated
     private String blockName;
     @Deprecated
     private int harvestLevel = Integer.MAX_VALUE;
     @Deprecated
     private ToolType toolType = null;
 
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> pBuilder) {
+        if (isSlabBlock()) pBuilder.add(TYPE, WATERLOGGED);
+    }
+
+
+    @NotNull
+    public VoxelShape getShape(BlockState pState, BlockGetter pLevel, BlockPos pPos, CollisionContext pContext) {
+        if (isSlabBlock()){
+            final VoxelShape BOTTOM_AABB = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D);
+            final VoxelShape TOP_AABB = Block.box(0.0D, 8.0D, 0.0D, 16.0D, 16.0D, 16.0D);
+
+            SlabType slabtype = pState.getValue(TYPE);
+            return switch (slabtype) {
+                case DOUBLE -> Shapes.block();
+                case TOP -> TOP_AABB;
+                default -> BOTTOM_AABB;
+            };
+        }else {
+            return super.getShape(pState, pLevel, pPos, pContext);
+        }
+    }
 
     /**
      * 设置方块物品。重写该方法可以修改方块物品的属性
@@ -48,7 +83,7 @@ public class BaseBlock extends Block {
         return new BlockItem(this, new Item.Properties().tab(CreativeModeTab.TAB_BUILDING_BLOCKS));
     }
 
-    @Deprecated
+    @Override
     public String getBlockName() {
         return blockName;
     }
@@ -103,24 +138,6 @@ public class BaseBlock extends Block {
      * 覆盖重写了 canHarvestBlock 以支持 toolType | harvestLevel 来判断是否可以挖掘。<br/>
      * 如果 toolType | harvestLevel 任意一个都未被赋值则使用 tags 判断是否可以挖掘
      */
-    @Override
-    public boolean canHarvestBlock(BlockState state, BlockGetter level, BlockPos pos, Player player) {
-        if (toolType == null || harvestLevel == Integer.MAX_VALUE) {
-            return super.canHarvestBlock(state, level, pos, player);
-        }
-
-        if (harvestLevel <= -1) return false;
-        if (toolType == ToolType.NONE) return true;
-
-        return switch (toolType) {
-            case PICKAXE, AXE, SHOVEL, HOE, SWORD -> {
-                if (!(player.getMainHandItem().getItem() instanceof TieredItem digger)) yield false;
-                yield digger.getTier().getLevel() >= harvestLevel;
-            }
-            default -> false;
-        };
-    }
-
     @Override
     public float defaultDestroyTime() {
         if (toolType == null || harvestLevel == Integer.MAX_VALUE) {
@@ -241,30 +258,5 @@ public class BaseBlock extends Block {
         public RegistryObject<BlockEntityType<?>> getBlockEntityTypeObj() {
             return blockEntityTypeObj;
         }
-    }
-
-
-    public static enum ToolType {
-        /**
-         * 镐子
-         */
-        PICKAXE,
-        /**
-         * 斧子
-         */
-        AXE,
-        /**
-         * 铲子
-         */
-        SHOVEL,
-        /**
-         * 斧头
-         */
-        HOE,
-        /**
-         * 剑
-         */
-        SWORD,
-        NONE
     }
 }

@@ -1,5 +1,6 @@
 package io.github.zimoyin.zhenfa.block.base;
 
+import io.github.zimoyin.zhenfa.datagen.provider.BlockStates;
 import io.github.zimoyin.zhenfa.datagen.provider.LootTableProvider;
 import io.github.zimoyin.zhenfa.datagen.provider.Recipes;
 import io.github.zimoyin.zhenfa.utils.Lang;
@@ -9,6 +10,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SlabBlock;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
 
@@ -76,8 +78,24 @@ public class BaseGeneratedBlockData {
     /**
      * 注册方块的方向和模型
      * 默认使用  provider.simpleBlock 注册无方向的模型
+     *
+     * models	获取BlockModelProvider用于生成物品块模型。
+     * itemModels	获取ItemModelProvider用于生成物品块模型。
+     * modLoc	ResourceLocation为给定 mod id 的命名空间中的路径创建一个。
+     * mcLoc	ResourceLocation为命名空间中的路径创建minecraft。
+     * blockTexture	textures/block引用与块同名的纹理。
+     * simpleBlockItem	根据给定的模型文件为某个块创建一个物品模型。
+     * simpleBlockWithItem	为一个块模型和一个物品模型创建单个块状态，并使用块模型作为其父模型。
      */
-    public void registerStatesAndModel(BlockStateProvider provider) {
+    public void registerStatesAndModel(BlockStates provider) {
+        if (data.getBlock() instanceof SlabBlock block){
+            provider.slabBlock(block);
+            return;
+        }
+        if (data.getBlock() instanceof IBaseBlock block){
+            if (block.isSlabBlock()) provider.slabBlock(data.getBlock());
+            return;
+        }
         provider.simpleBlock(data.getBlock());
     }
 

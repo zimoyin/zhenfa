@@ -10,13 +10,19 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.TieredItem;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
@@ -26,21 +32,28 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Optional;
 
+import static net.minecraft.world.level.block.SculkSensorBlock.WATERLOGGED;
+import static net.minecraft.world.level.block.SlabBlock.TYPE;
+
 /**
  * 实体方块基础类，该类描述一个确实存在的方块
  */
-public abstract class BaseEntityBlock extends net.minecraft.world.level.block.BaseEntityBlock {
+public abstract class BaseEntityBlock extends net.minecraft.world.level.block.BaseEntityBlock implements IBaseEntityBlock, IBaseBlock {
 
 
     public BaseEntityBlock(Material material) {
         super(Properties.of(material).strength(1.5F, 6.0F));
+        if (isSlabBlock())
+            this.registerDefaultState(this.defaultBlockState().setValue(TYPE, SlabType.BOTTOM).setValue(WATERLOGGED, Boolean.FALSE));
+
     }
 
     public BaseEntityBlock(Properties properties) {
         super(properties);
+        if (isSlabBlock())
+            this.registerDefaultState(this.defaultBlockState().setValue(TYPE, SlabType.BOTTOM).setValue(WATERLOGGED, Boolean.FALSE));
     }
 
-    @Deprecated
     private String blockName;
     @Deprecated
     private int harvestLevel = Integer.MAX_VALUE;
@@ -54,33 +67,50 @@ public abstract class BaseEntityBlock extends net.minecraft.world.level.block.Ba
     private static final Logger LOGGER = LogUtils.getLogger();
 
 
-    private Class<? extends BlockEntity> getEntityClazz() {
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> pBuilder) {
+        if (isSlabBlock()) pBuilder.add(TYPE, WATERLOGGED);
+    }
+
+
+    @NotNull
+    public VoxelShape getShape(BlockState pState, BlockGetter pLevel, BlockPos pPos, CollisionContext pContext) {
+        if (isSlabBlock()) {
+            final VoxelShape BOTTOM_AABB = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D);
+            final VoxelShape TOP_AABB = Block.box(0.0D, 8.0D, 0.0D, 16.0D, 16.0D, 16.0D);
+
+            SlabType slabtype = pState.getValue(TYPE);
+            return switch (slabtype) {
+                case DOUBLE -> Shapes.block();
+                case TOP -> TOP_AABB;
+                default -> BOTTOM_AABB;
+            };
+        } else {
+            return super.getShape(pState, pLevel, pPos, pContext);
+        }
+    }
+
+    @Override
+    public Class<? extends BlockEntity> getEntityClazz() {
         if (entityClazz == null) {
-            BlockRegterTables.RegisterBlock annotation = this.getClass().getAnnotation(BlockRegterTables.RegisterBlock.class);
-            if (annotation == null) {
-                LOGGER.error("The Class {} Not Found @{}", this.getClass().getName(), BlockRegterTables.RegisterBlock.class.getSimpleName());
-                return entityClazz;
-            }
-            entityClazz = annotation.blockEntity();
-            if (entityClazz == BlockEntity.class) {
-                LOGGER.error("The @{} Not Found blockEntity field", BlockRegterTables.RegisterBlock.class.getSimpleName());
-                entityClazz = BaseBlockEntity.class;
-            }
+            entityClazz = IBaseEntityBlock.super.getEntityClazz();
         }
         return entityClazz;
     }
 
-    private Method getClientTickMethod() throws NoSuchMethodException {
+    @Override
+    public Method getClientTickMethod() throws NoSuchMethodException {
         if (clientTickMethod == null) {
-            clientTickMethod = getEntityClazz().getMethod("clientTick", Level.class, BlockPos.class, BlockState.class, BlockEntity.class);
+            clientTickMethod = IBaseEntityBlock.super.getClientTickMethod();
             clientTickMethod.setAccessible(true);
         }
         return clientTickMethod;
     }
 
-    private Method getServerTickMethod() throws NoSuchMethodException {
+    @Override
+    public Method getServerTickMethod() throws NoSuchMethodException {
         if (serverTickMethod == null) {
-            serverTickMethod = getEntityClazz().getMethod("serverTick", Level.class, BlockPos.class, BlockState.class, BlockEntity.class);
+            serverTickMethod = IBaseEntityBlock.super.getServerTickMethod();
             serverTickMethod.setAccessible(true);
         }
         return serverTickMethod;
@@ -93,7 +123,7 @@ public abstract class BaseEntityBlock extends net.minecraft.world.level.block.Ba
         return new BlockItem(this, new Item.Properties().tab(CreativeModeTab.TAB_BUILDING_BLOCKS));
     }
 
-    @Deprecated
+    @Override
     public String getBlockName() {
         return blockName;
     }
@@ -194,64 +224,5 @@ public abstract class BaseEntityBlock extends net.minecraft.world.level.block.Ba
         // 这代表其无法使用 Minecraft 自带的方块模型的方式渲染。
         // 为保证正常渲染应将这一方法的返回值覆盖回来。
         return RenderShape.MODEL;
-    }
-
-    @Override
-    public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) {
-        BlockEntity blockEntity = null;
-        try {
-            Constructor<? extends BlockEntity> constructor = getEntityClazz().getConstructor(BlockPos.class, BlockState.class);
-            blockEntity = constructor.newInstance(pos, state);
-        } catch (Exception e) {
-            try {
-                Constructor<?> constructor = ClassUtils.findConstructor(getEntityClazz(), BlockEntityType.class, BlockPos.class, BlockState.class);
-                blockEntity = (BlockEntity) constructor.newInstance(BaseBlockEntity.getEntityType(getEntityClazz()), pos, state);
-            } catch (Exception ex) {
-                LOGGER.error("Failed to create BlockEntity; Class {}", getEntityClazz().getName(), ex);
-            }
-        }
-        return blockEntity;
-    }
-
-    /**
-     * 默认情况下，方块实体并不具备跟随游戏刻刷新（亦即方块实体刻）的能力，
-     * 若要获得此能力，方块实体所在的那个方块需要明确声明一个所谓的「Ticker」，亦即 BlockEntityTicker<?>。
-     * 这通过覆盖 EntityBlock 的 getTicker 方法实现。
-     * <p>
-     * 此外，你可以根据 Level 是在逻辑服务器上还是逻辑客户端上来返回不同的 Ticker。
-     */
-    @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level pLevel, @NotNull BlockState pState, @NotNull BlockEntityType<T> pBlockEntityType) {
-        if (getEntityClazz() == null) return super.getTicker(pLevel, pState, pBlockEntityType);
-        BlockEntityType<?> entityType = BaseBlockEntity.getEntityType(getEntityClazz());
-        return BaseEntityBlock.createTickerHelper(pBlockEntityType, entityType, pLevel.isClientSide ? this::clientTick : this::serverTick);
-    }
-
-    /**
-     * 每 tick 都会调用，仅在客户端上执行
-     */
-    public void clientTick(Level level, BlockPos pos, BlockState state, BlockEntity o) {
-        // 执行类实体中的 clientTick 方法
-        try {
-            BlockEntity entity = BaseBlockEntity.getEntityType(getEntityClazz()).getBlockEntity(level, pos);
-            if (entity != null) getClientTickMethod().invoke(entity, level, pos, state, o);
-            else LOGGER.warn("BaseBlockEntity serverTick method entity is null in {}", getEntityClazz().getName());
-        } catch (Exception e) {
-            LOGGER.error("BaseBlockEntity clientTick method exception in {}", getEntityClazz().getName(), e);
-        }
-    }
-
-    /**
-     * 每 tick 都会调用，仅在服务端上执行
-     */
-    public void serverTick(Level level, BlockPos pos, BlockState state, BlockEntity e) {
-        // 执行类实体中的 serverTick 方法
-        try {
-            BlockEntity entity = BaseBlockEntity.getEntityType(getEntityClazz()).getBlockEntity(level, pos);
-            if (entity != null) getServerTickMethod().invoke(entity, level, pos, state, e);
-            else LOGGER.warn("BaseBlockEntity serverTick method entity is null in {}", getEntityClazz().getName());
-        } catch (Exception ex) {
-            LOGGER.error("BaseBlockEntity serverTick method exception in {}", getEntityClazz().getName(), ex);
-        }
     }
 }

@@ -368,7 +368,7 @@ public class BlockRegterTables {
         RegistryObject<Block> blockRegistryObject = BLOCKS.register(blockId, createFactory(cls));
         RegistryObject<BlockItem> itemRegistryObject = ITEMS.register(itemId, getBlockItemSupplier(cls, blockRegistryObject));
         if (BlockEntity.class.isAssignableFrom(blockEntity) && blockEntity != BlockEntity.class) {
-            if (!BaseEntityBlock.class.isAssignableFrom(cls)) throw new IllegalArgumentException(cls+" must be a subclass of BaseEntityBlock");
+            if (!EntityBlock.class.isAssignableFrom(cls)) throw new IllegalArgumentException(cls+" must implements EntityBlock");
             registryBlockEntityType = registerBlockEntity(blockEntity, blockRegistryObject, blockId);
         }
         BaseBlock.Data data = new BaseBlock.Data(blockRegistryObject, itemRegistryObject, registryBlockEntityType, cls, annotation);
@@ -481,7 +481,7 @@ public class BlockRegterTables {
         }).min(Comparator.comparingInt(m -> Modifier.isStatic(m.getModifiers()) ? 0 : 1)).orElse(Stream.of(clazz.getMethods()).filter(m -> {
             int paramCount = m.getParameterCount();
             return BlockItem.class.equals(m.getReturnType()) && paramCount <= 1 && (paramCount == 0 || Block.class.isAssignableFrom(m.getParameterTypes()[0]));
-        }).min(Comparator.comparingInt(m -> Modifier.isStatic(m.getModifiers()) ? 0 : 1)).orElseThrow(() -> new IllegalArgumentException("Class " + clazz.getName() + " must have a static factory method " + "returning BlockItem with: 0 parameters or 1 Block-type parameter")));
+        }).min(Comparator.comparingInt(m -> Modifier.isStatic(m.getModifiers()) ? 0 : 1)).orElseThrow(() -> new IllegalArgumentException("Class " + clazz.getName() + " must have a [static] method " + "returning BlockItem with: 0 parameters or 1 Block-type parameter")));
 
         final boolean isStatic = Modifier.isStatic(method.getModifiers());
         final int paramCount = method.getParameterCount();

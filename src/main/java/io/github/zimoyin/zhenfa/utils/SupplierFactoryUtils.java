@@ -1,5 +1,8 @@
 package io.github.zimoyin.zhenfa.utils;
 
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
+
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.function.Supplier;
@@ -9,7 +12,7 @@ import java.util.function.Supplier;
  * @date : 2025/03/18
  */
 public class SupplierFactoryUtils {
-
+    private static final Logger LOGGER = LogUtils.getLogger();
     public static <I> Supplier<? extends I> createFactory(Class<? extends I> cls) {
         if (cls == null) {
             throw new IllegalArgumentException("Failed to create factory; Class is null");
