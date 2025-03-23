@@ -13,12 +13,10 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import org.checkerframework.checker.units.qual.A;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
@@ -35,14 +33,14 @@ public interface IBaseEntityBlock extends EntityBlock, IBaseBlock {
 
     default Class<? extends BlockEntity> getEntityClazz() {
         Class<? extends BlockEntity> entityClazz = null;
-        BlockRegterTables.RegisterBlock annotation = this.getClass().getAnnotation(BlockRegterTables.RegisterBlock.class);
+        BlockRegisterTables.RegisterBlock annotation = this.getClass().getAnnotation(BlockRegisterTables.RegisterBlock.class);
         if (annotation == null) {
-            LOGGER.error("The Class {} Not Found @{}", this.getClass().getName(), BlockRegterTables.RegisterBlock.class.getSimpleName());
+            LOGGER.error("The Class {} Not Found @{}", this.getClass().getName(), BlockRegisterTables.RegisterBlock.class.getSimpleName());
             return entityClazz;
         }
         entityClazz = annotation.blockEntity();
         if (entityClazz == BlockEntity.class) {
-            LOGGER.error("The @{} Not Found blockEntity field", BlockRegterTables.RegisterBlock.class.getSimpleName());
+            LOGGER.error("The @{} Not Found blockEntity field", BlockRegisterTables.RegisterBlock.class.getSimpleName());
             entityClazz = BaseBlockEntity.class;
         }
         return entityClazz;

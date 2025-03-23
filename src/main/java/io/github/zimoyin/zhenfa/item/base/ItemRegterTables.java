@@ -1,11 +1,9 @@
 package io.github.zimoyin.zhenfa.item.base;
 
 import com.mojang.logging.LogUtils;
-import io.github.zimoyin.zhenfa.block.base.BlockRegterTables;
 import io.github.zimoyin.zhenfa.utils.ScanResultUtils;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;

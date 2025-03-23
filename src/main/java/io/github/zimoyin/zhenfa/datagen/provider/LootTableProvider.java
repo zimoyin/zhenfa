@@ -5,7 +5,7 @@ import net.minecraft.data.DataGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import static io.github.zimoyin.zhenfa.block.base.BlockRegterTables.getDataList;
+import static io.github.zimoyin.zhenfa.block.base.BlockRegisterTables.getDataList;
 
 public class LootTableProvider extends BaseLootTableProvider {
 

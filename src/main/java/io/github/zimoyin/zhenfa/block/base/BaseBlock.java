@@ -2,7 +2,6 @@ package io.github.zimoyin.zhenfa.block.base;
 
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
@@ -157,9 +156,9 @@ public class BaseBlock extends Block implements IBaseBlock {
         private final RegistryObject<BlockItem> itemObj;
         private final RegistryObject<BlockEntityType<?>> blockEntityTypeObj;
         private final Class<? extends Block> cls;
-        private final BlockRegterTables.RegisterBlock annotation;
+        private final BlockRegisterTables.RegisterBlock annotation;
 
-        public Data(RegistryObject<Block> blockObj, RegistryObject<BlockItem> itemObj, RegistryObject<BlockEntityType<?>> registryBlockEntityType, Class<? extends Block> cls, BlockRegterTables.RegisterBlock annotation) {
+        public Data(RegistryObject<Block> blockObj, RegistryObject<BlockItem> itemObj, RegistryObject<BlockEntityType<?>> registryBlockEntityType, Class<? extends Block> cls, BlockRegisterTables.RegisterBlock annotation) {
             this.blockObj = blockObj;
             this.itemObj = itemObj;
             this.cls = cls;
@@ -251,7 +250,7 @@ public class BaseBlock extends Block implements IBaseBlock {
             return cls;
         }
 
-        public BlockRegterTables.RegisterBlock getAnnotation() {
+        public BlockRegisterTables.RegisterBlock getAnnotation() {
             return annotation;
         }
 

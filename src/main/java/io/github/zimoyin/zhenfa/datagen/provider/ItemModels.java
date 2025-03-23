@@ -2,7 +2,7 @@ package io.github.zimoyin.zhenfa.datagen.provider;
 
 import com.mojang.logging.LogUtils;
 import io.github.zimoyin.zhenfa.block.base.BaseBlock;
-import io.github.zimoyin.zhenfa.block.base.BlockRegterTables;
+import io.github.zimoyin.zhenfa.block.base.BlockRegisterTables;
 import io.github.zimoyin.zhenfa.item.base.BaseItem;
 import io.github.zimoyin.zhenfa.item.base.ItemRegterTables;
 import net.minecraft.data.DataGenerator;
@@ -25,7 +25,7 @@ public class ItemModels extends ItemModelProvider {
 
     @Override
     protected void registerModels() {
-        for (BaseBlock.Data data : BlockRegterTables.getDataList()) {
+        for (BaseBlock.Data data : BlockRegisterTables.getDataList()) {
             if (data.isGenerated()) {
                 try {
                     data.getGeneratedData().registerItemModel(this);

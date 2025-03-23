@@ -2,13 +2,12 @@ package io.github.zimoyin.zhenfa.datagen.provider;
 
 import com.mojang.logging.LogUtils;
 import io.github.zimoyin.zhenfa.block.base.BaseBlock;
-import io.github.zimoyin.zhenfa.block.base.BlockRegterTables;
+import io.github.zimoyin.zhenfa.block.base.BlockRegisterTables;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.state.properties.SlabType;
-import net.minecraftforge.client.model.generators.BlockModelBuilder;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ConfiguredModel;
 import net.minecraftforge.client.model.generators.ModelFile;
@@ -30,7 +29,7 @@ public class BlockStates extends BlockStateProvider {
 
     @Override
     protected void registerStatesAndModels() {
-        for (BaseBlock.Data data : BlockRegterTables.getDataList()) {
+        for (BaseBlock.Data data : BlockRegisterTables.getDataList()) {
             if (data.isGenerated()) {
                 try {
                     data.getGeneratedData().registerStatesAndModel(this);

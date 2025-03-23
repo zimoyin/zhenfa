@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import static io.github.zimoyin.zhenfa.Zhenfa.MOD_ID;
-import static io.github.zimoyin.zhenfa.block.base.BlockRegterTables.getDataList;
+import static io.github.zimoyin.zhenfa.block.base.BlockRegisterTables.getDataList;
 
 /**
  * Tag 的作用类似于矿物辞典，但又不完全相同。

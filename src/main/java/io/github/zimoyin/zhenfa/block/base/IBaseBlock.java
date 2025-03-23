@@ -1,5 +1,6 @@
 package io.github.zimoyin.zhenfa.block.base;
 
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -23,6 +24,13 @@ public interface IBaseBlock extends IForgeBlock {
      */
     default boolean isSlabBlock() {
         return false;
+    }
+
+    /**
+     * 设置方块的渲染类型，将会在自动注册的适合调用
+     */
+    default RenderType getRenderType(){
+        return null;
     }
 
     /**

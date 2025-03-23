@@ -2,15 +2,14 @@ package io.github.zimoyin.zhenfa.datagen.provider;
 
 import com.mojang.logging.LogUtils;
 import io.github.zimoyin.zhenfa.block.base.BaseBlock;
-import io.github.zimoyin.zhenfa.block.base.BlockRegterTables;
+import io.github.zimoyin.zhenfa.block.base.BlockRegisterTables;
+import io.github.zimoyin.zhenfa.block.base.IBaseBlock;
 import io.github.zimoyin.zhenfa.creativetab.base.BaseCreativeModeTab;
 import io.github.zimoyin.zhenfa.creativetab.base.CreativeModeTabBuilder;
 import io.github.zimoyin.zhenfa.item.base.BaseItem;
 import io.github.zimoyin.zhenfa.item.base.ItemRegterTables;
 import io.github.zimoyin.zhenfa.utils.Lang;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraftforge.common.data.LanguageProvider;
 import org.slf4j.Logger;
@@ -32,9 +31,10 @@ public class LanguageProviders extends LanguageProvider {
 
     @Override
     protected void addTranslations() {
-        for (BaseBlock.Data data : BlockRegterTables.getDataList()) {
-            if (data.getBlock() instanceof BaseBlock data2) {
-                if (Lang.LangType.EN_US.equals(currentFileLang)) add(data.getBlock(), data2.getBlockName());
+        for (BaseBlock.Data data : BlockRegisterTables.getDataList()) {
+            if (data.getBlock() instanceof IBaseBlock data2) {
+                if (Lang.LangType.EN_US.equals(currentFileLang) && data2.getBlockName() != null)
+                    add(data.getBlock(), data2.getBlockName());
             }
             if (data.isGenerated()) {
                 for (Lang lang : data.getGeneratedData().lang()) {

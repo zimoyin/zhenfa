@@ -32,15 +32,14 @@ import java.util.stream.Stream;
 
 import static io.github.zimoyin.zhenfa.Zhenfa.MOD_ID;
 import static io.github.zimoyin.zhenfa.item.base.ItemRegterTables.ITEMS;
-import static io.github.zimoyin.zhenfa.utils.ResourcesUtils.validateResourcePath;
 import static io.github.zimoyin.zhenfa.utils.SupplierFactoryUtils.createFactory;
 
 /**
  * @author : zimo
  * @date : 2025/03/16
  */
-public class BlockRegterTables {
-    private BlockRegterTables() {
+public class BlockRegisterTables {
+    private BlockRegisterTables() {
     }
 
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -371,6 +370,7 @@ public class BlockRegterTables {
             if (!EntityBlock.class.isAssignableFrom(cls)) throw new IllegalArgumentException(cls+" must implements EntityBlock");
             registryBlockEntityType = registerBlockEntity(blockEntity, blockRegistryObject, blockId);
         }
+
         BaseBlock.Data data = new BaseBlock.Data(blockRegistryObject, itemRegistryObject, registryBlockEntityType, cls, annotation);
         setData(data);
 

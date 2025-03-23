@@ -5,8 +5,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ChunkMap;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -112,13 +110,13 @@ public class BaseBlockEntity extends BlockEntity {
 
     /**
      * 通过反射获取方块实体的注册类型。
-     * 需确保 {@link BlockRegterTables} 已正确注册该类型。
+     * 需确保 {@link BlockRegisterTables} 已正确注册该类型。
      *
      * @param cls 方块实体类（如 {@code MyBlockEntity.class}）
      * @return 对应的 {@link BlockEntityType}
      */
     public static BlockEntityType<?> getEntityType(Class<? extends BlockEntity> cls) {
-        return BlockRegterTables.getEntityRegistryObject(cls).get();
+        return BlockRegisterTables.getEntityRegistryObject(cls).get();
     }
 
     /**
