@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.LivingEntity;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -70,5 +71,10 @@ public class CompoundTagUtils {
     public static <T> T getObject(CompoundTag tag, Class<T> cls, String key) {
         if (tag.get(key) == null) return null;
         return SerializableUtils.jsonTo(cls, tag.getString(key));
+    }
+
+    public static String getString(CompoundTag tag, String key) {
+        if (tag.get(key) == null) return null;
+        return tag.getString(key);
     }
 }

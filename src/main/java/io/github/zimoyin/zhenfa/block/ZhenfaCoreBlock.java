@@ -8,19 +8,22 @@ import io.github.zimoyin.zhenfa.block.base.BlockRegisterTables;
 import io.github.zimoyin.zhenfa.utils.ext.CompoundTagUtils;
 import io.github.zimoyin.zhenfa.utils.ext.ParticlesUtils;
 import io.github.zimoyin.zhenfa.utils.ext.PlayerUtils;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.util.*;
@@ -29,35 +32,31 @@ import java.util.*;
  * @author : zimo
  * &#064;date : 2025/03/21
  */
-@BlockRegisterTables.RegisterBlock(value = "core", data = true, blockEntity = ZhenfaCoreBlock.CoreBlockTileEntity.class)
+@BlockRegisterTables.RegisterBlock(value = "core", data = true, blockEntity = ZhenfaCoreBlock.ZhenfaCoreBlockEntity.class)
 public class ZhenfaCoreBlock extends BaseEntityBlock {
     public static BaseBlock.Data data;
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public ZhenfaCoreBlock() {
-        super(Material.STONE);
+        super(Properties.of(Material.METAL));
         setBlockName("Zhenfa Core");
     }
 
-    @Override
-    public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
-        if (pLevel.isClientSide) {
-            // 客户端逻辑（仅在单人游戏或客户端执行）
-            PlayerUtils.sendMessageTo(pPlayer, "你好世界"); // 发送聊天消息
-            return InteractionResult.SUCCESS; // 返回操作成功状态
-        } else {
-            CoreBlockTileEntity entity = getBlockEntity(pLevel, pPos).get();
-            entity.detectFormation(pLevel);
-
-            // 13. 未找到目标方块时返回状态
-            return InteractionResult.CONSUME;
-        }
+    public Optional<ZhenfaCoreBlockEntity> getBlockEntity(Level level, BlockPos pos) {
+        return super.getBlockEntity(ZhenfaCoreBlockEntity.class, level, pos);
     }
 
 
-    public Optional<ZhenfaCoreBlock.CoreBlockTileEntity> getBlockEntity(Level level, BlockPos pos) {
-        return super.getBlockEntity(ZhenfaCoreBlock.CoreBlockTileEntity.class, level, pos);
+    public RenderType getRenderType() {
+        return RenderType.translucent();
+    }
+
+    @Override
+    public void setPlacedBy(Level pLevel, BlockPos pPos, BlockState pState, @Nullable LivingEntity pPlacer, ItemStack pStack) {
+        getBlockEntity(pLevel, pPos).ifPresent(blockEntity -> {
+            blockEntity.setLivingEntity(pPlacer);
+        });
     }
 
     /**
@@ -77,8 +76,7 @@ public class ZhenfaCoreBlock extends BaseEntityBlock {
      * 检测区域内是否存在方块、掉落物、实体、箭、雨滴、雪花、流体等对象。
      * </p>
      */
-    public static class CoreBlockTileEntity extends BaseBlockEntity {
-
+    public static class ZhenfaCoreBlockEntity extends BaseBlockEntity {
         private static final Logger LOGGER = LogUtils.getLogger();
 
         // 记录作为边界的标记方块位置（仅当其直接阻隔水域填充时才算有效）
@@ -90,15 +88,15 @@ public class ZhenfaCoreBlock extends BaseEntityBlock {
         private static final int MAX_DISTANCE = 16;
 
         private final Block BOUNDARY_MARKER = BoundaryBlock.data.getBlock();
-        private final Block CORE_BLOCK = data.getBlock();
+        public final Block CORE_BLOCK = data.getBlock();
+        private UUID playerUUID = null;
 
-        public CoreBlockTileEntity(BlockPos worldPosition, BlockState blockState) {
-            super(getEntityType(CoreBlockTileEntity.class), worldPosition, blockState);
+        public ZhenfaCoreBlockEntity(BlockPos worldPosition, BlockState blockState) {
+            super(getEntityType(ZhenfaCoreBlockEntity.class), worldPosition, blockState);
         }
 
-
         /**
-         * 玩家右键触发该方法，开始检测阵法是否完整包围核心方块。
+         * 检测阵法是否完整包围核心方块。
          * <p>
          * 采用洪水填充算法（仅向四个正方向扩散）：
          * <ul>
@@ -166,13 +164,10 @@ public class ZhenfaCoreBlock extends BaseEntityBlock {
                 setChanged();
                 // 为边界方块添加主方块
                 for (BlockPos pos : boundaryPositions) {
-                    ParticlesUtils.spawnParticlesAboveBlock(level, pos);
                     BlockEntity entity = level.getBlockEntity(pos);
-                    if (entity == null) continue;
-                    if (entity instanceof BoundaryBlock.BoundaryBlockEntity e0) e0.setCoreBlockPos(corePos);
+                    if (entity != null && entity instanceof BoundaryBlock.BoundaryBlockEntity e0)
+                        e0.setCoreBlockPos(corePos);
                 }
-                // 核心方块添加粒子效果
-//                ParticlesUtils.spawnParticlesAboveBlock(level,corePos);
             }
 
             return isEnclosed;
@@ -209,6 +204,7 @@ public class ZhenfaCoreBlock extends BaseEntityBlock {
         /**
          * 根据给定的所有位置（包括内部水域与边界）计算区域的 AABB。
          * AABB 是一个规则矩形
+         *
          * @param positions 坐标集合
          * @return 计算得到的 AABB 范围
          */
@@ -243,34 +239,70 @@ public class ZhenfaCoreBlock extends BaseEntityBlock {
         @NotNull
         public CompoundTag getUpdateTag() {
             CompoundTag tag = super.getUpdateTag();
-            CompoundTagUtils.putObject(tag, "boundaryPositions", boundaryPositions);
-            CompoundTagUtils.putObject(tag, "filledPositions", filledPositions);
+//            CompoundTagUtils.putObject(tag, "boundaryPositions", boundaryPositions);
+//            CompoundTagUtils.putObject(tag, "filledPositions", filledPositions);
+            CompoundTagUtils.putObject(tag, "player", playerUUID);
             return tag;
         }
 
         @Override
         public void load(CompoundTag tag) {
             super.load(tag);
-            // 从 NBT 恢复 boundaryPositions 与 formationAABB 数据
-            // 示例：使用 tag.putIntArray(...) 进行序列化，实际实现可根据需求调整
-            boundaryPositions.clear();
-            filledPositions.clear();
-            boundaryPositions.addAll(CompoundTagUtils.getListObject(tag, "boundaryPositions", BlockPos.class));
-            filledPositions.addAll(CompoundTagUtils.getListObject(tag, "filledPositions", BlockPos.class));
+//            boundaryPositions.clear();
+//            filledPositions.clear();
+//            boundaryPositions.addAll(CompoundTagUtils.getListObject(tag, "boundaryPositions", BlockPos.class));
+//            filledPositions.addAll(CompoundTagUtils.getListObject(tag, "filledPositions", BlockPos.class));
+            playerUUID = CompoundTagUtils.getObject(tag, UUID.class, "player");
         }
 
         @Override
         protected void saveAdditional(@NotNull CompoundTag tag) {
             super.saveAdditional(tag);
-            // 将 filledPositions、boundaryPositions 与 formationAABB 数据保存到 tag 中
-            CompoundTagUtils.putObject(tag, "boundaryPositions", boundaryPositions);
-            CompoundTagUtils.putObject(tag, "filledPositions", filledPositions);
+//            CompoundTagUtils.putObject(tag, "boundaryPositions", boundaryPositions);
+//            CompoundTagUtils.putObject(tag, "filledPositions", filledPositions);
+            CompoundTagUtils.putObject(tag, "player", playerUUID);
+        }
+
+        public Player getOwner() {
+            if (playerUUID == null) return null;
+            return PlayerUtils.getPlayerByUUID(playerUUID);
+        }
+
+        // 粒子提示
+        public void spawnParticlesAboveBlock(Level level, BlockPos pos) {
+            Player livingEntity = getOwner();
+            if (livingEntity == null) return;
+            Item item = livingEntity.getMainHandItem().getItem();
+            if (item.equals(CORE_BLOCK.asItem())) {
+                ParticlesUtils.spawnParticlesAboveBlock(level, pos);
+            }
+
+            if (item.equals(BOUNDARY_MARKER.asItem())) {
+                for (BlockPos bs : boundaryPositions) {
+                    ParticlesUtils.spawnParticlesAboveBlock(level, bs);
+                }
+            }
+
+            if (item.equals(Items.WATER_BUCKET)) {
+                for (BlockPos bs : filledPositions) {
+                    ParticlesUtils.spawnParticlesAboveBlock(level, bs);
+                }
+            }
         }
 
         @Override
         public void serverTick(Level level, BlockPos pos, BlockState state, BlockEntity e) {
             super.serverTick(level, pos, state, e);
             detectFormation(level);
+            spawnParticlesAboveBlock(level, pos);
+        }
+
+        public void setLivingEntity(@Nullable LivingEntity pPlacer) {
+            this.playerUUID = pPlacer.getUUID();
+        }
+
+        public UUID getPlayerUUID() {
+            return playerUUID;
         }
     }
 }

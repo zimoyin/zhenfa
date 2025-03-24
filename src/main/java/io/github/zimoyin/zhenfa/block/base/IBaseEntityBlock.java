@@ -99,7 +99,8 @@ public interface IBaseEntityBlock extends EntityBlock, IBaseBlock {
         // 执行类实体中的 clientTick 方法
         try {
             BlockEntity entity = BaseBlockEntity.getEntityType(getEntityClazz()).getBlockEntity(level, pos);
-            if (entity != null) getClientTickMethod().invoke(entity, level, pos, state, o);
+            Method method = getClientTickMethod();
+            if (entity != null && method != null) method.invoke(entity, level, pos, state, o);
             else LOGGER.warn("BaseBlockEntity serverTick method entity is null in {}", getEntityClazz().getName());
         } catch (Exception e) {
             LOGGER.error("BaseBlockEntity clientTick method exception in {}", getEntityClazz().getName(), e);
@@ -113,7 +114,8 @@ public interface IBaseEntityBlock extends EntityBlock, IBaseBlock {
         // 执行类实体中的 serverTick 方法
         try {
             BlockEntity entity = BaseBlockEntity.getEntityType(getEntityClazz()).getBlockEntity(level, pos);
-            if (entity != null) getServerTickMethod().invoke(entity, level, pos, state, e);
+            Method method = getServerTickMethod();
+            if (entity != null && method != null) method.invoke(entity, level, pos, state, e);
             else LOGGER.warn("BaseBlockEntity serverTick method entity is null in {}", getEntityClazz().getName());
         } catch (Exception ex) {
             LOGGER.error("BaseBlockEntity serverTick method exception in {}", getEntityClazz().getName(), ex);

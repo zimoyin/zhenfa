@@ -4,13 +4,17 @@ import ca.weblite.objc.Client;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.server.ServerLifecycleHooks;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author : zimo
@@ -30,9 +34,30 @@ public class PlayerUtils {
         return level.players();
     }
 
+    public static List<? extends Player> getPlayers() {
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        return server.getPlayerList().getPlayers();
+    }
+
+    public static Player getPlayerByUUID(Level level, String uuid) {
+        return level.players().stream().filter(player -> player.getUUID().toString().equals(uuid)).findAny().orElse(null);
+    }
+
+    public static Player getPlayerByUUID(Level level, UUID uuid) {
+        return level.players().stream().filter(player -> player.getUUID().equals(uuid)).findAny().orElse(null);
+    }
+
+    public static Player getPlayerByUUID(String uuid) {
+        return getPlayers().stream().filter(player -> player.getUUID().toString().equals(uuid)).findAny().orElse(null);
+    }
+
+    public static Player getPlayerByUUID(UUID uuid) {
+        return getPlayers().stream().filter(player -> player.getUUID().equals(uuid)).findAny().orElse(null);
+    }
 
     /**
      * 获取区块内玩家
+     *
      * @param level
      * @param blockPos 方块所在的区块
      */

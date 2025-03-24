@@ -109,6 +109,14 @@ public class BlockRegisterTables {
     }
 
     /**
+     * 注册方块和物品
+     */
+    public static BaseBlock.Data register(BlockRegisterTables.BlockBuilder builder) {
+        return builder.build();
+    }
+
+
+    /**
      * 注册方块和物品（带数据生成器）
      *
      * @param id       方块的注册ID，同时作为物品ID
@@ -126,7 +134,9 @@ public class BlockRegisterTables {
      * @param properties 方块物理属性配置
      * @param function   数据生成器，需显式传入{@code (Function)null}表示不使用
      * @return 注册数据容器
+     * @deprecated 请使用 BlockBuilder
      */
+    @Deprecated
     public static BaseBlock.Data register(String id, BlockBehaviour.Properties properties, Function<BaseBlock.Data, BaseGeneratedBlockData> function) {
         return register(id, properties, null, function);
     }
@@ -138,7 +148,9 @@ public class BlockRegisterTables {
      * @param tab      创造模式物品栏分类
      * @param function 数据生成器，需显式传入{@code (Function)null}表示不使用
      * @return 注册数据容器
+     * @deprecated 请使用 BlockBuilder
      */
+    @Deprecated
     public static BaseBlock.Data register(String id, CreativeModeTab tab, Function<BaseBlock.Data, BaseGeneratedBlockData> function) {
         return register(id, null, tab, function);
     }
@@ -151,7 +163,9 @@ public class BlockRegisterTables {
      * @param properties 方块属性 默认： BlockBehaviour.Properties.of(Material.STONE).strength(1.5f, 6)
      * @param tab        物品栏 默认： CreativeModeTab.TAB_BUILDING_BLOCKS
      * @param function   数据生成器，用于生成适用于当前方块的数据
+     * @deprecated 请使用 BlockBuilder
      */
+    @Deprecated
     public static BaseBlock.Data register(String id, BlockBehaviour.Properties properties, CreativeModeTab tab, Function<BaseBlock.Data, BaseGeneratedBlockData> function) {
         if (id == null) throw new IllegalArgumentException("id cannot be null");
         if (properties == null) properties = BlockBehaviour.Properties.of(Material.STONE).strength(1.5f, 6f);
@@ -173,7 +187,9 @@ public class BlockRegisterTables {
      * @param id            方块的 ID，他将和方块物品的ID一致
      * @param supplierBlock 方块工厂
      * @param function      数据生成器，用于生成适用于当前方块的数据
+     * @deprecated 请使用 BlockBuilder
      */
+    @Deprecated
     public static BaseBlock.Data register(String id, Supplier<? extends Block> supplierBlock, Function<BaseBlock.Data, BaseGeneratedBlockData> function) {
         return register(id, (CreativeModeTab) null, supplierBlock, function);
     }
@@ -186,7 +202,9 @@ public class BlockRegisterTables {
      * @param tab           物品栏 默认： CreativeModeTab.TAB_BUILDING_BLOCKS
      * @param supplierBlock 方块工厂
      * @param function      数据生成器，用于生成适用于当前方块的数据
+     * @deprecated 请使用 BlockBuilder
      */
+    @Deprecated
     public static BaseBlock.Data register(String id, CreativeModeTab tab, Supplier<? extends Block> supplierBlock, Function<BaseBlock.Data, BaseGeneratedBlockData> function) {
         return register(id, new Item.Properties().tab(tab), supplierBlock, function);
     }
@@ -198,7 +216,9 @@ public class BlockRegisterTables {
      * @param properties    方块物品属性 默认： BlockBehaviour.Properties.of(Material.STONE).strength(1.5f, 6)
      * @param supplierBlock 方块工厂
      * @param function      数据生成器，用于生成适用于当前方块的数据
+     * @deprecated 请使用 BlockBuilder
      */
+    @Deprecated
     public static BaseBlock.Data register(String id, Item.Properties properties, Supplier<? extends Block> supplierBlock, Function<BaseBlock.Data, BaseGeneratedBlockData> function) {
         if (id == null) throw new IllegalArgumentException("id cannot be null");
         if (supplierBlock == null) throw new IllegalArgumentException("sup cannot be null");
@@ -220,7 +240,9 @@ public class BlockRegisterTables {
      * @param supplierBlock 方块工厂
      * @param supplierItem  方块物品工厂
      * @param function      数据生成器，用于生成适用于当前方块的数据
+     * @deprecated 请使用 BlockBuilder
      */
+    @Deprecated
     public static BaseBlock.Data register(String id, Supplier<? extends Block> supplierBlock, Supplier<? extends BlockItem> supplierItem, Function<BaseBlock.Data, BaseGeneratedBlockData> function) {
         if (id == null) throw new IllegalArgumentException("id cannot be null");
         if (supplierBlock == null) throw new IllegalArgumentException("sup cannot be null");
@@ -256,7 +278,9 @@ public class BlockRegisterTables {
      * @param id         方块/物品的注册ID
      * @param properties 方块物理属性配置
      * @return 包含自定义属性的注册数据容器
+     * @deprecated 请使用 BlockBuilder
      */
+    @Deprecated
     public static BaseBlock.Data register(String id, BlockBehaviour.Properties properties) {
         return register(id, properties, null, (Class<? extends BaseGeneratedBlockData>) null);
     }
@@ -290,7 +314,9 @@ public class BlockRegisterTables {
      * @param properties 方块物理属性配置
      * @param tab        创造模式物品栏分类
      * @return 包含自定义属性和物品栏的注册数据容器
+     * @deprecated 请使用 BlockBuilder
      */
+    @Deprecated
     public static BaseBlock.Data register(String id, BlockBehaviour.Properties properties, CreativeModeTab tab) {
         return register(id, properties, tab, (Class<? extends BaseGeneratedBlockData>) null);
     }
@@ -302,7 +328,9 @@ public class BlockRegisterTables {
      * @param properties 方块物理属性配置
      * @param dataClas   自定义数据生成类类型
      * @return 包含自定义属性和数据生成器的注册数据容器
+     * @deprecated 请使用 BlockBuilder
      */
+    @Deprecated
     public static BaseBlock.Data register(String id, BlockBehaviour.Properties properties, Class<? extends BaseGeneratedBlockData> dataClas) {
         return register(id, properties, null, dataClas);
     }
@@ -314,7 +342,9 @@ public class BlockRegisterTables {
      * @param tab      创造模式物品栏分类
      * @param dataClas 自定义数据生成类类型
      * @return 包含自定义物品栏和数据生成器的注册数据容器
+     * @deprecated 请使用 BlockBuilder
      */
+    @Deprecated
     public static BaseBlock.Data register(String id, CreativeModeTab tab, Class<? extends BaseGeneratedBlockData> dataClas) {
         return register(id, null, tab, dataClas);
     }
@@ -326,7 +356,9 @@ public class BlockRegisterTables {
      * @param properties 方块属性 默认： BlockBehaviour.Properties.of(Material.STONE).strength(1.5f, 6)
      * @param tab        物品栏 默认： CreativeModeTab.TAB_BUILDING_BLOCKS
      * @param dataClas   数据生成类 默认：BaseGeneratedBlockData
+     * @deprecated 请使用 BlockBuilder
      */
+    @Deprecated
     public static BaseBlock.Data register(String id, BlockBehaviour.Properties properties, CreativeModeTab tab, Class<? extends BaseGeneratedBlockData> dataClas) {
         if (id == null) throw new IllegalArgumentException("id cannot be null");
         if (properties == null) properties = BlockBehaviour.Properties.of(Material.STONE).strength(1.5f, 6f);
@@ -387,7 +419,7 @@ public class BlockRegisterTables {
             Field dataField = getDataField(cls);
             if (dataField == null) {
                 LOGGER.warn("The `RegisterBlock` annotation on the block registration class has the `data` property set to `true`, but the `{}` does not include `public static BaseBlock.Data RegisterBlockData = null;`.", cls.getName());
-            }else {
+            } else {
                 try {
                     dataField.set(cls, data);
                 } catch (IllegalAccessException e) {
@@ -398,7 +430,7 @@ public class BlockRegisterTables {
             dataField = getDataField(blockEntity);
             if (dataField == null) {
                 LOGGER.warn("The `RegisterBlock` annotation on the block registration class has the `data` property set to `true`, but the `{}` does not include `public static BaseBlock.Data RegisterBlockData = null;`.", blockEntity.getName());
-            }else {
+            } else {
                 try {
                     dataField.set(cls, data);
                 } catch (IllegalAccessException e) {
@@ -409,6 +441,9 @@ public class BlockRegisterTables {
     }
 
     private static RegistryObject<BlockEntityType<?>> registerBlockEntity(Class<? extends BlockEntity> cls, RegistryObject<Block> blockRegistryObject, String blockId) {
+        if (cls == null) throw new IllegalArgumentException("cls cannot be null");
+        if (blockRegistryObject == null) throw new IllegalArgumentException("blockRegistryObject cannot be null");
+        if (blockId == null) throw new IllegalArgumentException("blockId cannot be null");
         // 通过反射获取构造函数
         try {
             BlockEntityType.BlockEntitySupplier<BlockEntity> supplier = getBlockEntitySupplier(cls);
@@ -447,6 +482,9 @@ public class BlockRegisterTables {
             }
             return (pos, state) -> {
                 try {
+                    // BaseBlockEntity.getEntityType(cls) 是获取当前注册了的 BlockEntityType 实例
+                    // BlockEntityType 会在启动时注册
+                    // BlockEntity 会在存档里面进行创建
                     return (BlockEntity) fallbackConstructor.newInstance(BaseBlockEntity.getEntityType(cls), pos, state);
                 } catch (Exception ex) {
                     LOGGER.error("Failed to create BlockEntity instance using fallback constructor for class {}", cls.getName(), ex);
@@ -586,5 +624,135 @@ public class BlockRegisterTables {
          * 生成方块数据的描述类
          */
         Class<? extends BaseGeneratedBlockData> generatedData() default BaseGeneratedBlockData.class;
+    }
+
+    public static class BlockBuilder {
+        private Supplier<Block> blockSupplier = null;
+        private Supplier<BlockItem> blockItemSupplier = null;
+        private Class<? extends BlockEntity> blockEntityClass = null;
+        private Class<? extends BaseGeneratedBlockData> blockGeneratedDataClass = null;
+        private BlockBehaviour.Properties properties = null;
+        private CreativeModeTab tab = null;
+        private String blockId = null;
+        private String itemId = null;
+        private String blockEntityId = null;
+        private Item.Properties itemProperties = null;
+        private Function<BaseBlock.Data, BaseGeneratedBlockData> blockGeneratedDataSupplier = null;
+        private BaseBlock.Data data = null;
+
+        private void init() {
+            validateRequiredFields();
+            setDefaultValues();
+            initializeBlockSupplier();
+            initializeBlockItemSupplier();
+        }
+
+        private void validateRequiredFields() {
+            if (blockId == null) throw new IllegalArgumentException("blockId cannot be null");
+        }
+
+        private void setDefaultValues() {
+            itemId = Objects.requireNonNullElse(itemId, blockId);
+            blockEntityId = Objects.requireNonNullElse(blockEntityId, blockId);
+        }
+
+        private void initializeBlockSupplier() {
+            if (blockSupplier == null) {
+                blockSupplier = (properties != null)
+                        ? () -> new BaseBlock(properties)
+                        : () -> new BaseBlock(BlockBehaviour.Properties.of(Material.STONE));
+            }
+        }
+
+        private void initializeBlockItemSupplier() {
+            if (blockItemSupplier == null) {
+                Item.Properties itemProps = (itemProperties != null)
+                        ? itemProperties
+                        : new Item.Properties().tab(tab != null ? tab : CreativeModeTab.TAB_BUILDING_BLOCKS);
+
+                blockItemSupplier = () -> new BlockItem(data.getBlock(), itemProps);
+            }
+        }
+
+        // Append methods for chainable configuration
+        public BlockBuilder appendBlockSupplier(Supplier<Block> supplier) {
+            this.blockSupplier = supplier;
+            return this;
+        }
+
+        public BlockBuilder appendBlockItemSupplier(Supplier<BlockItem> supplier) {
+            this.blockItemSupplier = supplier;
+            return this;
+        }
+
+        public BlockBuilder appendBlockEntityClass(Class<? extends BlockEntity> clazz) {
+            this.blockEntityClass = clazz;
+            return this;
+        }
+
+        public BlockBuilder appendGeneratedDataClass(Class<? extends BaseGeneratedBlockData> clazz) {
+            this.blockGeneratedDataClass = clazz;
+            return this;
+        }
+
+        public BlockBuilder appendProperties(BlockBehaviour.Properties properties) {
+            this.properties = properties;
+            return this;
+        }
+
+        public BlockBuilder appendTab(CreativeModeTab tab) {
+            this.tab = tab;
+            return this;
+        }
+
+        public BlockBuilder appendBlockId(String blockId) {
+            this.blockId = blockId;
+            return this;
+        }
+
+        public BlockBuilder appendItemId(String itemId) {
+            this.itemId = itemId;
+            return this;
+        }
+
+        public BlockBuilder appendBlockEntityId(String blockEntityId) {
+            this.blockEntityId = blockEntityId;
+            return this;
+        }
+
+        public BlockBuilder appendItemProperties(Item.Properties itemProperties) {
+            this.itemProperties = itemProperties;
+            return this;
+        }
+
+        public BlockBuilder appendGeneratedDataSupplier(Function<BaseBlock.Data, BaseGeneratedBlockData> supplier) {
+            this.blockGeneratedDataSupplier = supplier;
+            return this;
+        }
+
+        public BaseBlock.Data build() {
+            init();
+
+            RegistryObject<Block> blockRegistryObject = BLOCKS.register(blockId, blockSupplier);
+            RegistryObject<BlockItem> itemRegistryObject = ITEMS.register(itemId, blockItemSupplier);
+
+            RegistryObject<BlockEntityType<?>> registryObject = null;
+            if (blockEntityClass != null) {
+                registryObject = registerBlockEntity(blockEntityClass, blockRegistryObject, blockEntityId);
+            }
+
+            data = new BaseBlock.Data(blockRegistryObject, itemRegistryObject, registryObject, null, null);
+            data.setBlockId(blockId);
+
+            if (blockGeneratedDataClass != null) {
+                data.setGeneratedDataClass(blockGeneratedDataClass);
+            }
+            if (blockGeneratedDataSupplier != null) {
+                data.setGeneratedData(blockGeneratedDataSupplier.apply(data));
+            }
+
+            BLOCK_DATA_LIST.add(data);
+            return data;
+        }
     }
 }
