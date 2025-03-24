@@ -49,6 +49,7 @@ public class TestBlock extends BaseBlock {
 如果你想要获取到这两个对象，你需要在类中创建一个静态的 `Data` 字段，然后使用 `Data` 字段获取到方块物品对象。
 ```java
 // 设置  data 为 true 后才会进行注入
+// 同样在  RegisterBlock 设置了 blockEntity 后也会将 data 注入到 blockEntity 中
 @BlockRegterTables.RegisterBlock(value = "test",data = true)
 public class TestBlock extends BaseBlock {
     // 等待注入，字段名称任意即可
