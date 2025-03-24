@@ -1,6 +1,7 @@
 package io.github.zimoyin.zhenfa.block.base;
 
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -8,6 +9,7 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.TieredItem;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.extensions.IForgeBlock;
 
@@ -30,6 +32,14 @@ public interface IBaseBlock extends IForgeBlock {
      * 设置方块的渲染类型，将会在自动注册的适合调用
      */
     default RenderType getRenderType(){
+        return null;
+    }
+
+    /**
+     * 设置方块的渲染器
+     * 实现 BlockEntityRenderer 即可
+     */
+    default  BlockEntityRendererProvider<? extends BlockEntity> getBlockEntityRender(){
         return null;
     }
 

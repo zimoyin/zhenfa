@@ -356,7 +356,6 @@ public class BlockRegisterTables {
         String itemId = annotation.itemId();
         Class<? extends BlockEntity> blockEntity = annotation.blockEntity();
         boolean isInjectData = annotation.data();
-        Field dataField = getDataField(cls);
         if (itemId == null || itemId.isEmpty()) itemId = blockId;
         if (blockId == null || blockId.isEmpty()) {
             blockId = cls.getSimpleName().toLowerCase();
@@ -385,14 +384,26 @@ public class BlockRegisterTables {
         setData(data);
 
         if (isInjectData) {
+            Field dataField = getDataField(cls);
             if (dataField == null) {
                 LOGGER.warn("The `RegisterBlock` annotation on the block registration class has the `data` property set to `true`, but the `{}` does not include `public static BaseBlock.Data RegisterBlockData = null;`.", cls.getName());
-                return;
+            }else {
+                try {
+                    dataField.set(cls, data);
+                } catch (IllegalAccessException e) {
+                    LOGGER.warn("Failed to inject data into block; {}", cls.getName(), e);
+                }
             }
-            try {
-                dataField.set(cls, data);
-            } catch (IllegalAccessException e) {
-                LOGGER.warn("Failed to inject data into block; {}", cls.getName(), e);
+            if (blockEntity == BlockEntity.class) return;
+            dataField = getDataField(blockEntity);
+            if (dataField == null) {
+                LOGGER.warn("The `RegisterBlock` annotation on the block registration class has the `data` property set to `true`, but the `{}` does not include `public static BaseBlock.Data RegisterBlockData = null;`.", blockEntity.getName());
+            }else {
+                try {
+                    dataField.set(cls, data);
+                } catch (IllegalAccessException e) {
+                    LOGGER.warn("Failed to inject data into block; {}", cls.getName(), e);
+                }
             }
         }
     }

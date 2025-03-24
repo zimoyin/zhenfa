@@ -1,7 +1,9 @@
 package io.github.zimoyin.zhenfa.block.base;
 
+import com.google.common.base.Supplier;
 import com.mojang.logging.LogUtils;
 import io.github.zimoyin.zhenfa.utils.ext.ClassUtils;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
@@ -31,6 +33,9 @@ public interface IBaseEntityBlock extends EntityBlock, IBaseBlock {
         return new BlockItem(block, new Item.Properties().tab(CreativeModeTab.TAB_BUILDING_BLOCKS));
     }
 
+    /**
+     * 获取 BlockEntityClass
+     */
     default Class<? extends BlockEntity> getEntityClazz() {
         Class<? extends BlockEntity> entityClazz = null;
         BlockRegisterTables.RegisterBlock annotation = this.getClass().getAnnotation(BlockRegisterTables.RegisterBlock.class);
