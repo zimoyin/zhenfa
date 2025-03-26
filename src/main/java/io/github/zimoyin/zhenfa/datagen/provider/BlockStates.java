@@ -48,26 +48,20 @@ public class BlockStates extends BlockStateProvider {
         slabBlock(block, blockTexture(block), blockTexture(block));
     }
 
-    /**
-     * 使用该方法是有风险的，如果你需要使用该方法那么一定要参考 SlabBlock 实现
-     */
-    public void slabBlock(Block block) {
-        slabBlock(block, blockTexture(block), blockTexture(block));
+
+    public void simpleSlabBlock(Block block) {
+        ResourceLocation modLoc = modLoc("block/"+block.getRegistryName().getPath());
+        simpleSlabBlock(block, modLoc);
     }
 
-    /**
-     * 使用该方法是有风险的，如果你需要使用该方法那么一定要参考 SlabBlock 实现
-     */
-    public void slabBlock(Block block, ResourceLocation doubleslab, ResourceLocation texture) {
-        slabBlock(block, doubleslab, texture, texture, texture);
+    public void simpleSlabBlock(Block block, ResourceLocation modLoc) {
+        ModelFile model = models()
+                .slab(block.getRegistryName().getPath(), modLoc, modLoc, modLoc)
+                .texture("particle",modLoc);
+        simpleBlock(block, model);
     }
 
-    /**
-     * 使用该方法是有风险的，如果你需要使用该方法那么一定要参考 SlabBlock 实现
-     */
-    public void slabBlock(Block block, ResourceLocation doubleslab, ResourceLocation side, ResourceLocation bottom, ResourceLocation top) {
-        slabBlock(block, models().slab(name(block), side, bottom, top), models().slabTop(name(block) + "_top", side, bottom, top), models().getExistingFile(doubleslab));
-    }
+
 
     /**
      * 使用该方法是有风险的，如果你需要使用该方法那么一定要参考 SlabBlock 实现

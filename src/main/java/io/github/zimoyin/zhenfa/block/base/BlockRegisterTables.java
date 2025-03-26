@@ -27,6 +27,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -639,6 +640,7 @@ public class BlockRegisterTables {
         private Item.Properties itemProperties = null;
         private Function<BaseBlock.Data, BaseGeneratedBlockData> blockGeneratedDataSupplier = null;
         private BaseBlock.Data data = null;
+        private Consumer<BaseBlock.Data> callback = null;
 
         private void init() {
             validateRequiredFields();
@@ -677,6 +679,11 @@ public class BlockRegisterTables {
         // Append methods for chainable configuration
         public BlockBuilder appendBlockSupplier(Supplier<Block> supplier) {
             this.blockSupplier = supplier;
+            return this;
+        }
+
+        public BlockBuilder appendBuildedCallback(Consumer<BaseBlock.Data> callback) {
+            this.callback = callback;
             return this;
         }
 
@@ -752,7 +759,14 @@ public class BlockRegisterTables {
             }
 
             BLOCK_DATA_LIST.add(data);
+            if (callback != null) callback.accept(data);
             return data;
         }
+
+
+    }
+
+    public static BlockBuilder builder(){
+        return new BlockBuilder();
     }
 }

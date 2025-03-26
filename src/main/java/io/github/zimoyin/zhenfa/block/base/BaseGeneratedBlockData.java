@@ -93,7 +93,7 @@ public class BaseGeneratedBlockData {
             return;
         }
         if (data.getBlock() instanceof IBaseBlock block && block.isSlabBlock()){
-            provider.slabBlock(data.getBlock());
+            provider.simpleSlabBlock(data.getBlock());
             return;
         }
         provider.simpleBlock(data.getBlock());
