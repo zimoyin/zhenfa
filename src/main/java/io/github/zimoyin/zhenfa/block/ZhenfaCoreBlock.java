@@ -22,6 +22,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.AABB;
+import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -34,7 +35,7 @@ import java.util.*;
  */
 @BlockRegisterTables.RegisterBlock(value = "core", data = true, blockEntity = ZhenfaCoreBlock.ZhenfaCoreBlockEntity.class)
 public class ZhenfaCoreBlock extends BaseEntityBlock {
-    public static BaseBlock.Data data;
+    public static BaseBlock.Data Data;
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -77,6 +78,7 @@ public class ZhenfaCoreBlock extends BaseEntityBlock {
      * </p>
      */
     public static class ZhenfaCoreBlockEntity extends BaseBlockEntity {
+        public static final Set<RegistryObject<Block>> AffectsBlocks = new HashSet<>();
         private static final Logger LOGGER = LogUtils.getLogger();
 
         // 记录作为边界的标记方块位置（仅当其直接阻隔水域填充时才算有效）
@@ -87,8 +89,8 @@ public class ZhenfaCoreBlock extends BaseEntityBlock {
         // 最大检测距离（单位：方块），超过该距离认为区域未被封闭
         private static final int MAX_DISTANCE = 16;
 
-        private final Block BOUNDARY_MARKER = BoundaryBlock.data.getBlock();
-        public final Block CORE_BLOCK = data.getBlock();
+        private final Block BOUNDARY_MARKER = BoundaryBlock.Data.getBlock();
+        public final Block CORE_BLOCK = ZhenfaCoreBlock.Data.getBlock();
         private UUID playerUUID = null;
 
         public ZhenfaCoreBlockEntity(BlockPos worldPosition, BlockState blockState) {
@@ -239,8 +241,6 @@ public class ZhenfaCoreBlock extends BaseEntityBlock {
         @NotNull
         public CompoundTag getUpdateTag() {
             CompoundTag tag = super.getUpdateTag();
-//            CompoundTagUtils.putObject(tag, "boundaryPositions", boundaryPositions);
-//            CompoundTagUtils.putObject(tag, "filledPositions", filledPositions);
             CompoundTagUtils.putObject(tag, "player", playerUUID);
             return tag;
         }
@@ -248,18 +248,12 @@ public class ZhenfaCoreBlock extends BaseEntityBlock {
         @Override
         public void load(CompoundTag tag) {
             super.load(tag);
-//            boundaryPositions.clear();
-//            filledPositions.clear();
-//            boundaryPositions.addAll(CompoundTagUtils.getListObject(tag, "boundaryPositions", BlockPos.class));
-//            filledPositions.addAll(CompoundTagUtils.getListObject(tag, "filledPositions", BlockPos.class));
             playerUUID = CompoundTagUtils.getObject(tag, UUID.class, "player");
         }
 
         @Override
         protected void saveAdditional(@NotNull CompoundTag tag) {
             super.saveAdditional(tag);
-//            CompoundTagUtils.putObject(tag, "boundaryPositions", boundaryPositions);
-//            CompoundTagUtils.putObject(tag, "filledPositions", filledPositions);
             CompoundTagUtils.putObject(tag, "player", playerUUID);
         }
 
@@ -273,6 +267,17 @@ public class ZhenfaCoreBlock extends BaseEntityBlock {
             Player livingEntity = getOwner();
             if (livingEntity == null) return;
             Item item = livingEntity.getMainHandItem().getItem();
+
+
+            for (BlockPos blockPos : filledPositions) {
+                BlockState blockState = level.getBlockState(blockPos);
+                AffectsBlocks.stream()
+                        .map(RegistryObject::get)
+                        .filter(blockState::is)
+                        .filter(block -> block.asItem().equals(item))
+                        .forEach(block -> ParticlesUtils.spawnParticlesAboveBlock(level, blockPos));
+            }
+
             if (item.equals(CORE_BLOCK.asItem())) {
                 ParticlesUtils.spawnParticlesAboveBlock(level, pos);
             }
@@ -288,13 +293,51 @@ public class ZhenfaCoreBlock extends BaseEntityBlock {
                     ParticlesUtils.spawnParticlesAboveBlock(level, bs);
                 }
             }
+
+
         }
 
         @Override
         public void serverTick(Level level, BlockPos pos, BlockState state, BlockEntity e) {
             super.serverTick(level, pos, state, e);
-            detectFormation(level);
+            // 检测阵法
+            if (!detectFormation(level)) return;
+            // 粒子提示
             spawnParticlesAboveBlock(level, pos);
+            // Action
+            HashMap<Block, List<BlockState>> map = getActionBlockMap(level);
+
+            List<ZhenfaTargetBlock.TargetType> targetTypes = new ArrayList<>();
+            for (Block block : map.keySet()) {
+                if (block instanceof ZhenfaTargetBlock target) {
+                    targetTypes.add(target.getType());
+                }
+                if (block instanceof BaseZhenfaActionBlock actionBlock) {
+                    actionBlock.action(level, map.get(block), targetTypes, this);
+                }
+            }
+        }
+
+        private @NotNull HashMap<Block, List<BlockState>> getActionBlockMap(Level level) {
+            List<Block> blocks = getActionBlocks();
+            HashMap<Block, List<BlockState>> map = new HashMap<>();
+
+            for (BlockPos filledBlockPos : filledPositions) {
+                BlockState blockState = level.getBlockState(filledBlockPos);
+                Block block = blocks.stream().filter(blockState::is).findAny().orElse(null);
+                if (block == null) continue;
+                List<BlockState> states = map.get(block);
+                if (states == null) states = new ArrayList<>();
+                states.add(blockState);
+                map.put(block, states);
+            }
+            return map;
+        }
+
+        private @NotNull List<Block> getActionBlocks() {
+            return AffectsBlocks.stream().map(RegistryObject::get)
+                    .filter(block -> BaseZhenfaActionBlock.class.isAssignableFrom(block.getClass()))
+                    .toList();
         }
 
         public void setLivingEntity(@Nullable LivingEntity pPlacer) {
@@ -303,6 +346,22 @@ public class ZhenfaCoreBlock extends BaseEntityBlock {
 
         public UUID getPlayerUUID() {
             return playerUUID;
+        }
+
+        public Set<BlockPos> getBoundaryPositions() {
+            return boundaryPositions;
+        }
+
+        public Set<BlockPos> getFilledPositions() {
+            return filledPositions;
+        }
+
+        public Block getCORE_BLOCK() {
+            return CORE_BLOCK;
+        }
+
+        public Block getBOUNDARY_MARKER() {
+            return BOUNDARY_MARKER;
         }
     }
 }

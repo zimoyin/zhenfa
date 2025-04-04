@@ -2,19 +2,17 @@ package io.github.zimoyin.zhenfa.block;
 
 import io.github.zimoyin.zhenfa.block.base.*;
 import io.github.zimoyin.zhenfa.datagen.provider.BlockStates;
+import io.github.zimoyin.zhenfa.item.ColorableItem;
 import io.github.zimoyin.zhenfa.utils.ext.CompoundTagUtils;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.NotNull;
-
-import static net.minecraft.world.level.block.SlabBlock.TYPE;
 
 /**
  * @author : zimo
@@ -26,7 +24,7 @@ import static net.minecraft.world.level.block.SlabBlock.TYPE;
         generatedData = BoundaryBlock.BoundaryBlockGenerator.class
 )
 public class BoundaryBlock extends BaseBlock implements IBaseEntityBlock {
-    public static BaseBlock.Data data;
+    public static BaseBlock.Data Data;
 
     public BoundaryBlock() {
         super(Properties.of(Material.STONE).noOcclusion().lightLevel(state -> 9));
@@ -54,14 +52,20 @@ public class BoundaryBlock extends BaseBlock implements IBaseEntityBlock {
         return true;
     }
 
+
+    @Override
+    public BlockItem getBlockItem() {
+        return new ColorableItem(this, new Item.Properties().tab(CreativeModeTab.TAB_BUILDING_BLOCKS));
+    }
+
     /**
      * 跳过连接处渲染
      */
     public boolean skipRendering(BlockState pState, BlockState pAdjacentBlockState, Direction pSide) {
-        return pAdjacentBlockState.is(this) ? true : super.skipRendering(pState, pAdjacentBlockState, pSide);
+        return pAdjacentBlockState.is(this);
     }
 
-    public RenderType getRenderType(){
+    public RenderType getRenderType() {
         return RenderType.translucent();
     }
 
@@ -120,8 +124,7 @@ public class BoundaryBlock extends BaseBlock implements IBaseEntityBlock {
 
         @Override
         public void registerStatesAndModel(BlockStates provider) {
-//            provider.slabBlock(data.getBlock());
-            provider.slabBlock(data.getBlock());
+            provider.simpleSlabBlock(data.getBlock());
         }
 
     }
